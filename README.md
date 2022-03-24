@@ -14,7 +14,7 @@ Enforce the use of curly quotes and apostrophes.
 
 ✨ **Simple** and **customizable** 🔧 Compatible with JavaScript, TypeScript, **JSX** and **Vue**!
 
-**Fixable:** This rule is automatically fixable using the `--fix` flag on the command line.`
+**Fixable:** This rule is automatically fixable using the `--fix` flag on the command line.
 
 ## Caution
 
