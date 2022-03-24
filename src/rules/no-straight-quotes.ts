@@ -40,16 +40,10 @@ const rule: Rule.RuleModule = {
     ],
   },
   create: context => {
-    function handleNode(
-      node: AST.Node | BaseNode | Node,
-      includesStringDelimiters: boolean
-    ) {
+    function handleNode(node: AST.Node | BaseNode | Node, textTrim: number) {
       const text = context.getSourceCode().getText(node as Node)
 
-      const textStart = includesStringDelimiters ? 1 : 0
-      const textEnd = includesStringDelimiters ? text.length - 1 : text.length
-
-      const textSubstring = text.substring(textStart, textEnd)
+      const textSubstring = text.substring(textTrim, text.length - textTrim)
       if (!textSubstring.includes("'") && !textSubstring.includes('"')) return
 
       context.report({
@@ -58,16 +52,14 @@ const rule: Rule.RuleModule = {
         fix(fixer) {
           let fixedText = replaceQuotes(
             text,
-            textStart,
-            textEnd,
+            textTrim,
             "'",
             context.options[0]?.["single-opening"] ?? "‘",
             context.options[0]?.["single-closing"] ?? "’"
           )
           fixedText = replaceQuotes(
             fixedText,
-            textStart,
-            textEnd,
+            textTrim,
             '"',
             context.options[0]?.["double-opening"] ?? "“",
             context.options[0]?.["double-closing"] ?? "”"
@@ -83,26 +75,26 @@ const rule: Rule.RuleModule = {
       return context.parserServices.defineTemplateBodyVisitor(
         // Event handlers for <template>.
         {
-          Literal: (node: AST.ESLintLiteral) => handleNode(node, true),
+          Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
           TemplateElement: (node: AST.ESLintTemplateElement) =>
-            handleNode(node, true),
-          VLiteral: (node: AST.VLiteral) => handleNode(node, true),
-          VText: (node: AST.VText) => handleNode(node, false),
+            handleNode(node, 1),
+          VLiteral: (node: AST.VLiteral) => handleNode(node, 1),
+          VText: (node: AST.VText) => handleNode(node, 0),
         },
         // Event handlers for <script> or scripts.
         {
-          JSXText: (node: JSXText) => handleNode(node, false),
-          Literal: (node: AST.ESLintLiteral) => handleNode(node, true),
+          JSXText: (node: JSXText) => handleNode(node, 0),
+          Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
           TemplateElement: (node: AST.ESLintTemplateElement) =>
-            handleNode(node, true),
+            handleNode(node, 1),
         }
       )
     }
 
     return {
-      JSXText: (node: JSXText) => handleNode(node, false),
-      Literal: (node: Literal) => handleNode(node, true),
-      TemplateElement: (node: TemplateElement) => handleNode(node, true),
+      JSXText: (node: JSXText) => handleNode(node, 0),
+      Literal: (node: Literal) => handleNode(node, 1),
+      TemplateElement: (node: TemplateElement) => handleNode(node, 1),
     }
   },
 }
