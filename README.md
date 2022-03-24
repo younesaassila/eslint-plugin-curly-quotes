@@ -6,8 +6,9 @@
 <a href="https://github.com/younesaassila/eslint-plugin-curly-quotes/stargazers">
   <img alt="GitHub stars" src="https://img.shields.io/github/stars/younesaassila/eslint-plugin-curly-quotes">
 </a>
-
-<br />
+<a href="https://github.com/younesaassila/eslint-plugin-curly-quotes">
+  <img alt="GitHub license" src="https://img.shields.io/github/license/younesaassila/eslint-plugin-curly-quotes">
+</a>
 
 Enforce the use of curly quotes and apostrophes.
 
