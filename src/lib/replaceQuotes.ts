@@ -1,8 +1,7 @@
 /**
  * Converts all straight quotes to curly quotes in the given text.
  * @param text The text containing straight quotes.
- * @param textStart The starting index (used to ignore string delimiters for Literal nodes)
- * @param textEnd The ending index (exclusive)
+ * @param textTrim The number of characters to ignore on each side of the text (used to ignore string delimiters, will usually be 1)
  * @param straightCharacter The straight quote character
  * @param openingCharacter The replacing opening quote character
  * @param closingCharacter The replacing closing quote character
@@ -10,15 +9,16 @@
  */
 export default function replaceQuotes(
   text: string,
-  textStart: number,
-  textEnd: number,
+  textTrim: number,
   straightCharacter: "'" | '"',
   openingCharacter: string,
   closingCharacter: string
 ) {
   const quoteRegex = new RegExp(straightCharacter, "g")
-  const matches = [...text.substring(textStart, textEnd).matchAll(quoteRegex)]
-  const indices = matches.map(match => match.index + textStart)
+  const matches = [
+    ...text.substring(textTrim, text.length - textTrim).matchAll(quoteRegex),
+  ]
+  const indices = matches.map(match => match.index + textTrim)
 
   let textChars = text.split("")
   let openedQuotes = 0
@@ -44,8 +44,8 @@ export default function replaceQuotes(
       ["\r", "\n", " "].includes(nextChar)
     const isApostrophe =
       straightCharacter === "'" &&
-      !["\r", "\n", " "].includes(previousChar) &&
-      (index !== textStart || textEnd - textStart === 1)
+      ((!["\r", "\n", " "].includes(previousChar) && index !== textTrim) || // Is not at beginning of text nor preceded by whitespace character
+        text.length - 2 * textTrim === 1) // Is only character
 
     if (isOpeningCharacter) setOpeningCharacter(index)
     else if (isClosingCharacter) setClosingCharacter(index)
