@@ -25,6 +25,9 @@ ruleTester.run("curly-quotes", rule, {
     {
       code: "'I don’t like tomatoes.'",
     },
+    {
+      code: "var str = `Hello, ${'world'}!`",
+    },
   ],
   invalid: [
     /**
