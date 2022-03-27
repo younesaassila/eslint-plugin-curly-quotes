@@ -1,6 +1,6 @@
 import { AST } from "vue-eslint-parser"
 import { JSXText, Node as BaseNode } from "@babel/types"
-import { Literal, Node, TemplateElement } from "estree"
+import { Literal, Node, TemplateLiteral } from "estree"
 import { Rule } from "eslint"
 import replaceQuotes from "../lib/replaceQuotes"
 
@@ -50,19 +50,33 @@ const rule: Rule.RuleModule = {
         node: node as Node,
         messageId: "preferCurlyQuotes",
         fix(fixer) {
+          const ignoredIndexRanges = []
+          // Ignore expressions in template literals.
+          if (node.type === "TemplateLiteral") {
+            for (const expression of node.expressions) {
+              const range = [
+                expression.range[0] - node.range[0],
+                expression.range[1] - node.range[0],
+              ]
+              ignoredIndexRanges.push(range)
+            }
+          }
+
           let fixedText = replaceQuotes(
             text,
             textTrim,
             "'",
             context.options[0]?.["single-opening"] ?? "‘",
-            context.options[0]?.["single-closing"] ?? "’"
+            context.options[0]?.["single-closing"] ?? "’",
+            ignoredIndexRanges
           )
           fixedText = replaceQuotes(
             fixedText,
             textTrim,
             '"',
             context.options[0]?.["double-opening"] ?? "“",
-            context.options[0]?.["double-closing"] ?? "”"
+            context.options[0]?.["double-closing"] ?? "”",
+            ignoredIndexRanges
           )
 
           return fixer.replaceText(node as Node, fixedText)
@@ -76,7 +90,7 @@ const rule: Rule.RuleModule = {
         // Event handlers for <template>.
         {
           Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
-          TemplateElement: (node: AST.ESLintTemplateElement) =>
+          TemplateLiteral: (node: AST.ESLintTemplateLiteral) =>
             handleNode(node, 1),
           VLiteral: (node: AST.VLiteral) => handleNode(node, 1),
           VText: (node: AST.VText) => handleNode(node, 0),
@@ -85,7 +99,7 @@ const rule: Rule.RuleModule = {
         {
           JSXText: (node: JSXText) => handleNode(node, 0),
           Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
-          TemplateElement: (node: AST.ESLintTemplateElement) =>
+          TemplateLiteral: (node: AST.ESLintTemplateLiteral) =>
             handleNode(node, 1),
         }
       )
@@ -94,7 +108,7 @@ const rule: Rule.RuleModule = {
     return {
       JSXText: (node: JSXText) => handleNode(node, 0),
       Literal: (node: Literal) => handleNode(node, 1),
-      TemplateElement: (node: TemplateElement) => handleNode(node, 1),
+      TemplateLiteral: (node: TemplateLiteral) => handleNode(node, 1),
     }
   },
 }

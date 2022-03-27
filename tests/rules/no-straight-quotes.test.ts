@@ -83,6 +83,14 @@ ruleTester.run("curly-quotes", rule, {
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
     /**
+     * Template Literals
+     */
+    {
+      code: "var str = `The correct answer is \"${'banana'}\".`",
+      output: "var str = `The correct answer is “${'banana'}”.`",
+      errors: [{ messageId: "preferCurlyQuotes", type: "TemplateLiteral" }],
+    },
+    /**
      * JSX
      */
     {
