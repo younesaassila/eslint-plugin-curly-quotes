@@ -2,6 +2,7 @@ import { AST } from "vue-eslint-parser"
 import { JSXText, Node as BaseNode } from "@babel/types"
 import { Literal, Node, TemplateLiteral } from "estree"
 import { Rule } from "eslint"
+import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
 import replaceQuotes from "../lib/replaceQuotes"
 
 const rule: Rule.RuleModule = {
@@ -40,31 +41,41 @@ const rule: Rule.RuleModule = {
     ],
   },
   create: context => {
-    function handleNode(node: AST.Node | BaseNode | Node, textTrim: number) {
+    function handleNode(
+      node: AST.Node | BaseNode | Node,
+      textTrimValue: number
+    ) {
       const text = context.getSourceCode().getText(node as Node)
+      const ignoredIndexRanges = getIgnoredIndexRanges(node as Node) // e.g. expressions in template literals
 
-      const textSubstring = text.substring(textTrim, text.length - textTrim)
-      if (!textSubstring.includes("'") && !textSubstring.includes('"')) return
+      // Filter out unwanted characters (e.g. expressions in template literals).
+      const filteredText = text
+        .split("")
+        .filter((_char, index) => {
+          for (const range of ignoredIndexRanges)
+            if (range[0] <= index && index < range[1]) return false
+          return true
+        })
+        .join("")
+
+      // Trim text to ignore string delimiters.
+      const trimmedText = filteredText.substring(
+        textTrimValue,
+        text.length - textTrimValue
+      )
+
+      const includesStraightQuotes =
+        trimmedText.includes("'") || trimmedText.includes('"')
+
+      if (!includesStraightQuotes) return
 
       context.report({
         node: node as Node,
         messageId: "preferCurlyQuotes",
         fix(fixer) {
-          const ignoredIndexRanges = []
-          // Ignore expressions in template literals.
-          if (node.type === "TemplateLiteral") {
-            for (const expression of node.expressions) {
-              const range = [
-                expression.range[0] - node.range[0],
-                expression.range[1] - node.range[0],
-              ]
-              ignoredIndexRanges.push(range)
-            }
-          }
-
           let fixedText = replaceQuotes(
             text,
-            textTrim,
+            textTrimValue,
             "'",
             context.options[0]?.["single-opening"] ?? "‘",
             context.options[0]?.["single-closing"] ?? "’",
@@ -72,7 +83,7 @@ const rule: Rule.RuleModule = {
           )
           fixedText = replaceQuotes(
             fixedText,
-            textTrim,
+            textTrimValue,
             '"',
             context.options[0]?.["double-opening"] ?? "“",
             context.options[0]?.["double-closing"] ?? "”",
