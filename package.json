@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-curly-quotes",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Enforce the use of curly quotes",
   "files": [
     "dist/**"
