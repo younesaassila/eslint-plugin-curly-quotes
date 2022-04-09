@@ -2,7 +2,7 @@
  * Converts all straight quotes to curly quotes and apostrophes in the given text.
  * @param text The text containing straight quotes.
  * @param textTrimValue The number of characters to ignore at the start and end of the text (to ignore string delimiters, will usually be 1).
- * @param straightCharacter The straight quote character to replace: `'` or `"`
+ * @param straightCharacter The straight quote character to replace (`'` or `"`).
  * @param openingCharacter The replacing opening quote character.
  * @param closingCharacter The replacing closing quote character.
  * @param ignoredIndexRanges The index ranges to ignore.
