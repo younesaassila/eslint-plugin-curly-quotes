@@ -16,23 +16,23 @@ Enforce the use of curly quotes and apostrophes.
 
 **Fixable:** This rule is automatically fixable using the `--fix` flag on the command line.
 
-## Caution
-
-The plugin might replace double quotes used in query selector or stringified JSON strings. To disable the plugin on a specific line:
-
-```js
-/* eslint-disable-line curly-quotes/no-straight-quotes */
-```
+> **CAUTION**
+>
+> This plugin replaces quotes used in query selector or stringified JSON strings when using the `--fix` flag on the command line. To disable this plugin on a specific line:
+>
+> ```js
+> /* eslint-disable-line curly-quotes/no-straight-quotes */
+> ```
 
 ## Installation
 
-Install ESLint:
+Install [ESLint](https://www.npmjs.com/package/eslint):
 
 ```sh
 npm i -D eslint
 ```
 
-Install `eslint-plugin-curly-quotes`:
+Install [`eslint-plugin-curly-quotes`](https://www.npmjs.com/package/eslint-plugin-curly-quotes):
 
 ```sh
 npm i -D eslint-plugin-curly-quotes
@@ -58,7 +58,7 @@ Then add the `no-straight-quotes` rule to the `rules` section:
 }
 ```
 
-You can customize the characters used to replace straight quotes:
+You may customize the characters used to replace straight quotes:
 
 ```json
 {
@@ -78,5 +78,5 @@ You can customize the characters used to replace straight quotes:
 
 ## Acknowledgements
 
-- Inspired by [`eslint-plugin-prefer-smart-quotes`](https://github.com/totallymoney/eslint-plugin-prefer-smart-quotes)
-- Algorithm adapted from [this StackOverflow post](https://stackoverflow.com/questions/509685/ideas-for-converting-straight-quotes-to-curly-quotes)
+- Plugin inspired by [`eslint-plugin-prefer-smart-quotes`](https://github.com/totallymoney/eslint-plugin-prefer-smart-quotes)
+- Algorithm adapted from [“Ideas for converting straight quotes to curly quotes”](https://stackoverflow.com/questions/509685/ideas-for-converting-straight-quotes-to-curly-quotes) by [ShreevatsaR](https://stackoverflow.com/users/4958/shreevatsar) on Stack Overflow
