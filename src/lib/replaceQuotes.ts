@@ -5,7 +5,7 @@
  * @param straightCharacter The straight quote character to replace (`'` or `"`).
  * @param openingCharacter The replacing opening quote character.
  * @param closingCharacter The replacing closing quote character.
- * @param ignoredIndexRanges The index ranges to ignore.
+ * @param ignoredIndexRanges The char index ranges to ignore.
  * @returns The text with straight quotes replaced by curly quotes and apostrophes.
  */
 export default function replaceQuotes(

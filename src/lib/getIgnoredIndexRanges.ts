@@ -1,7 +1,7 @@
 import { Node } from "estree"
 
 /**
- * Returns an array of two-element arrays [start, end] representing index ranges to ignore (e.g. expressions in template literals).
+ * Returns an array of two-element arrays [start, end] representing char index ranges to ignore (e.g. expressions in template literals).
  * @param node
  * @returns
  */
