@@ -67,7 +67,7 @@ You may customize the characters used to replace straight quotes:
       "warn",
       {
         "single-opening": "‘",
-        "single-closing": "’",
+        "single-closing": "’", // This character is also used to replace apostrophes.
         "double-opening": "“",
         "double-closing": "”"
       }
