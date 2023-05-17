@@ -28,6 +28,9 @@ ruleTester.run("curly-quotes", rule, {
     {
       code: "var str = `Hello, ${'world'}!`",
     },
+    {
+      code: "String.raw`Hello, 'world'`",
+    },
   ],
   invalid: [
     /**
