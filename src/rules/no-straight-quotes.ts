@@ -1,7 +1,7 @@
-import { AST } from "vue-eslint-parser"
-import { JSXText, Node as BaseNode } from "@babel/types"
-import { Literal, Node, TemplateLiteral } from "estree"
-import { Rule } from "eslint"
+import type { AST } from "vue-eslint-parser"
+import type { JSXText, Node as BaseNode } from "@babel/types"
+import type { Literal, Node, TemplateLiteral } from "estree"
+import type { Rule } from "eslint"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
 import replaceQuotes from "../lib/replaceQuotes"
 
