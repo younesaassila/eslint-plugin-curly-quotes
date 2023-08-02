@@ -2,21 +2,6 @@
   "name": "eslint-plugin-curly-quotes",
   "version": "1.0.6",
   "description": "Enforce the use of curly quotes",
-  "files": [
-    "dist/**"
-  ],
-  "main": "./dist/index.js",
-  "scripts": {
-    "build": "tsup src/index.ts --no-splitting --minify",
-    "lint": "prettier --check .",
-    "lint:fix": "prettier --write .",
-    "test": "jest",
-    "prepack": "npm run build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/younesaassila/eslint-plugin-curly-quotes.git"
-  },
   "keywords": [
     "eslint",
     "eslintconfig",
@@ -25,12 +10,27 @@
     "smart-quotes",
     "curly-quotes"
   ],
-  "author": "Younes Aassila",
-  "license": "MIT",
+  "homepage": "https://github.com/younesaassila/eslint-plugin-curly-quotes#readme",
   "bugs": {
     "url": "https://github.com/younesaassila/eslint-plugin-curly-quotes/issues"
   },
-  "homepage": "https://github.com/younesaassila/eslint-plugin-curly-quotes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/younesaassila/eslint-plugin-curly-quotes.git"
+  },
+  "license": "MIT",
+  "author": "Younes Aassila",
+  "main": "./dist/index.js",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --no-splitting --minify",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .",
+    "prepublishOnly": "npm run build",
+    "test": "jest"
+  },
   "devDependencies": {
     "@babel/types": "^7.22.5",
     "@types/eslint": "^8.44.1",
@@ -44,6 +44,6 @@
     "vue-eslint-parser": "^9.3.1"
   },
   "peerDependencies": {
-    "eslint": ">=0.8.0"
+    "eslint": ">=3.0.0"
   }
 }
