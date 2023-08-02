@@ -8,7 +8,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup src/index.ts --no-splitting --minify",
-    "lint": "prettier --write .",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .",
     "test": "jest",
     "prepack": "npm run build"
   },
