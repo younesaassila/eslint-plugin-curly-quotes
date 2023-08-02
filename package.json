@@ -22,7 +22,7 @@
   "author": "Younes Aassila",
   "main": "./dist/index.js",
   "files": [
-    "dist/**"
+    "./dist/**"
   ],
   "scripts": {
     "build": "tsup src/index.ts --no-splitting --minify",
