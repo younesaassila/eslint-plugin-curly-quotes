@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "moduleResolution": "nodenext",
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
+    "strict": true
+  }
+}

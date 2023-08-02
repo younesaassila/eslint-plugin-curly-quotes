@@ -23,7 +23,7 @@ export default function replaceQuotes(
       .matchAll(quoteRegex),
   ]
   const indices = matches
-    .map(match => match.index + textTrimValue)
+    .map(match => (match.index as number) + textTrimValue) // https://github.com/microsoft/TypeScript/issues/36788
     .filter(index => {
       for (const range of ignoredIndexRanges) {
         if (range[0] <= index && index < range[1]) return false
