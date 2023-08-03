@@ -1,3 +1,5 @@
+import type { IgnoredIndexRange } from "../types"
+
 /**
  * Converts all straight quotes to curly quotes and apostrophes in the given text.
  * @param text The text containing straight quotes.
@@ -14,7 +16,7 @@ export default function replaceQuotes(
   straightCharacter: "'" | '"',
   openingCharacter: string,
   closingCharacter: string,
-  ignoredIndexRanges: number[][] = []
+  ignoredIndexRanges: IgnoredIndexRange[] = []
 ): string {
   const quoteRegex = new RegExp(straightCharacter, "g")
   const matches = [
@@ -24,12 +26,9 @@ export default function replaceQuotes(
   ]
   const indices = matches
     .map(match => (match.index as number) + textTrimValue) // See https://github.com/microsoft/TypeScript/issues/36788
-    .filter(index => {
-      for (const range of ignoredIndexRanges) {
-        if (range[0] <= index && index < range[1]) return false
-      }
-      return true
-    })
+    .filter(index =>
+      ignoredIndexRanges.every(range => index < range[0] || range[1] <= index)
+    )
 
   let textChars = text.split("")
   let openedQuotes = 0

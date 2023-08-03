@@ -52,9 +52,10 @@ const rule: Rule.RuleModule = {
       const filteredText = text
         .split("")
         .filter((_char, index) => {
-          for (const range of ignoredIndexRanges)
-            if (range[0] <= index && index < range[1]) return false
-          return true
+          if (ignoredIndexRanges === null) return true
+          return ignoredIndexRanges.every(
+            range => index < range[0] || range[1] <= index
+          )
         })
         .join("")
 
@@ -69,30 +70,38 @@ const rule: Rule.RuleModule = {
 
       if (!includesStraightQuotes) return
 
-      context.report({
-        node: node as Node,
-        messageId: "preferCurlyQuotes",
-        fix(fixer) {
-          let fixedText = replaceQuotes(
-            text,
-            textTrimValue,
-            "'",
-            context.options[0]?.["single-opening"] ?? "‘",
-            context.options[0]?.["single-closing"] ?? "’",
-            ignoredIndexRanges
-          )
-          fixedText = replaceQuotes(
-            fixedText,
-            textTrimValue,
-            '"',
-            context.options[0]?.["double-opening"] ?? "“",
-            context.options[0]?.["double-closing"] ?? "”",
-            ignoredIndexRanges
-          )
+      if (ignoredIndexRanges === null) {
+        // Not providing a fixer to avoid replacing quotes in expressions.
+        context.report({
+          node: node as Node,
+          messageId: "preferCurlyQuotes",
+        })
+      } else {
+        context.report({
+          node: node as Node,
+          messageId: "preferCurlyQuotes",
+          fix(fixer) {
+            let fixedText = replaceQuotes(
+              text,
+              textTrimValue,
+              "'",
+              context.options[0]?.["single-opening"] ?? "‘",
+              context.options[0]?.["single-closing"] ?? "’",
+              ignoredIndexRanges
+            )
+            fixedText = replaceQuotes(
+              fixedText,
+              textTrimValue,
+              '"',
+              context.options[0]?.["double-opening"] ?? "“",
+              context.options[0]?.["double-closing"] ?? "”",
+              ignoredIndexRanges
+            )
 
-          return fixer.replaceText(node as Node, fixedText)
-        },
-      })
+            return fixer.replaceText(node as Node, fixedText)
+          },
+        })
+      }
     }
 
     // Vue.js
