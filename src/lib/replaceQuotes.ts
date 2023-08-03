@@ -15,7 +15,7 @@ export default function replaceQuotes(
   openingCharacter: string,
   closingCharacter: string,
   ignoredIndexRanges: number[][] = []
-) {
+): string {
   const quoteRegex = new RegExp(straightCharacter, "g")
   const matches = [
     ...text
