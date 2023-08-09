@@ -23,6 +23,12 @@ Enforce the use of curly quotes and apostrophes.
 > ```js
 > /* eslint-disable-line curly-quotes/no-straight-quotes */
 > ```
+>
+> Or use tagged template literals:
+>
+> ```js
+> String.raw`{"foo": "bar"}`
+> ```
 
 ## Installation
 
