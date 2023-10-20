@@ -37,13 +37,13 @@ Enforce the use of curly quotes and apostrophes.
 Install [ESLint](https://www.npmjs.com/package/eslint):
 
 ```sh
-npm i -D eslint
+npm i --save-dev eslint
 ```
 
 Install [`eslint-plugin-curly-quotes`](https://www.npmjs.com/package/eslint-plugin-curly-quotes):
 
 ```sh
-npm i -D eslint-plugin-curly-quotes
+npm i --save-dev eslint-plugin-curly-quotes
 ```
 
 ## Usage
