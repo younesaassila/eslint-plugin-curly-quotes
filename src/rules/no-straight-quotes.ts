@@ -119,8 +119,14 @@ const rule: Rule.RuleModule = {
         {
           JSXText: (node: JSXText) => handleNode(node, 0),
           Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
-          TemplateLiteral: (node: AST.ESLintTemplateLiteral) =>
-            handleNode(node, 1),
+          TemplateLiteral: (node: AST.ESLintTemplateLiteral) => {
+            const parent = (node as unknown as { parent: AST.Node }).parent
+            const hasTag =
+              parent.type === "TaggedTemplateExpression" &&
+              node === parent.quasi
+            if (hasTag) return
+            return handleNode(node, 1)
+          },
         }
       )
     }
