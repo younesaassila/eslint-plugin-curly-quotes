@@ -18,16 +18,18 @@ Enforce the use of curly quotes and apostrophes.
 
 > **CAUTION**
 >
-> This plugin replaces quotes used in query selector or stringified JSON strings when using the `--fix` flag on the command line. To disable this plugin on a specific line:
+> The plugin replaces quotes used in query selector or stringified JSON strings when using the `--fix` flag on the command line. To ignore a specific string:
 >
-> ```js
-> /* eslint-disable-line curly-quotes/no-straight-quotes */
-> ```
->
-> Or use tagged template literals:
+> Use tagged template literals:
 >
 > ```js
 > String.raw`{"foo": "bar"}`
+> ```
+>
+> Or disable the rule for the line:
+>
+> ```js
+> const data = '{"foo": "bar"}' // eslint-disable-line curly-quotes/no-straight-quotes
 > ```
 
 ## Installation
