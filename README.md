@@ -78,6 +78,8 @@ You may customize the characters used to replace straight quotes:
         "single-closing": "’", // This character is also used to replace apostrophes.
         "double-opening": "“",
         "double-closing": "”"
+        "ignored-jsx-attributes": ["className"], // Straight quotes in these JSX attributes are ignored.
+        "ignored-function-calls": ["Error"], // Straight quotes passed as parameters to these functions are ignored.
       }
     ]
   }

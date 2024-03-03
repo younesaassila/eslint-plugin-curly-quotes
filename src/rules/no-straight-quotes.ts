@@ -1,5 +1,11 @@
 import type { AST } from "vue-eslint-parser"
-import type { JSXText, Node as BaseNode } from "@babel/types"
+import {
+  type JSXText,
+  type Node as BaseNode,
+  type JSXAttribute,
+  type CallExpression,
+  type NewExpression,
+} from "@babel/types"
 import type { Literal, Node, TemplateLiteral } from "estree"
 import type { Rule } from "eslint"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
@@ -35,16 +41,58 @@ const rule: Rule.RuleModule = {
             type: "string",
             description: "Double closing typographic quotation mark",
           },
+          "ignored-jsx-attributes": {
+            type: "array",
+            items: { type: "string" },
+            description: "JSX attributes to ignore",
+          },
+          "ignored-function-calls": {
+            type: "array",
+            items: { type: "string" },
+            description: "Function calls to ignore",
+          },
         },
         additionalProperties: false,
       },
     ],
   },
   create: context => {
+    let jsxAttributeStack: string[] = []
+    let callStack: string[] = []
+
     function handleNode(
       node: AST.Node | BaseNode | Node,
       textTrimValue: number
     ) {
+      // Skip text replacement if the node is inside a JSX attribute that should be ignored.
+      const jsxAttributesToIgnore = context.options[0]?.[
+        "ignored-jsx-attributes"
+      ] ?? ["className"]
+      const shouldIgnoreJsxAttribute = jsxAttributesToIgnore.length > 0
+      if (
+        shouldIgnoreJsxAttribute &&
+        jsxAttributeStack.length > 0 &&
+        jsxAttributeStack.some(attributeName =>
+          jsxAttributesToIgnore.includes(attributeName)
+        )
+      ) {
+        return
+      }
+
+      // Skip text replacement if the node is inside a function call that should be ignored.
+      const functionCallsToIgnore = context.options[0]?.[
+        "ignored-function-calls"
+      ] ?? ["Error"]
+      if (
+        functionCallsToIgnore.length > 0 &&
+        callStack.length > 0 &&
+        callStack.some(functionName =>
+          functionCallsToIgnore.includes(functionName)
+        )
+      ) {
+        return
+      }
+
       const text = context.getSourceCode().getText(node as Node)
       const ignoredIndexRanges = getIgnoredIndexRanges(node as Node) // e.g. expressions in template literals
 
@@ -134,6 +182,31 @@ const rule: Rule.RuleModule = {
     return {
       JSXText: (node: JSXText) => handleNode(node, 0),
       Literal: (node: Literal) => handleNode(node, 1),
+      JSXAttribute: (node: JSXAttribute) => {
+        if (node.name.type === "JSXIdentifier") {
+          jsxAttributeStack.push(node.name.name)
+        } else {
+          // JSXNamespacedName (e.g. xlink:href)
+          jsxAttributeStack.push(
+            node.name.namespace.name + ":" + node.name.name.name
+          )
+        }
+      },
+      "JSXAttribute:exit": () => {
+        jsxAttributeStack.pop()
+      },
+      CallExpression: (node: CallExpression) => {
+        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+      },
+      "CallExpression:exit": (node: CallExpression) => {
+        if (node.callee.type === "Identifier") callStack.pop()
+      },
+      NewExpression: (node: NewExpression) => {
+        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+      },
+      "NewExpression:exit": (node: NewExpression) => {
+        if (node.callee.type === "Identifier") callStack.pop()
+      },
       TemplateLiteral: (node: TemplateLiteral) => {
         const parent = (node as unknown as { parent: Node }).parent
         const hasTag =
