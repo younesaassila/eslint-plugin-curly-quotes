@@ -1,5 +1,11 @@
 import type { AST } from "vue-eslint-parser"
-import type { JSXText, Node as BaseNode, JSXAttribute } from "@babel/types"
+import {
+  type JSXText,
+  type Node as BaseNode,
+  type JSXAttribute,
+  type CallExpression,
+  type NewExpression,
+} from "@babel/types"
 import type { Literal, Node, TemplateLiteral } from "estree"
 import type { Rule } from "eslint"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
@@ -40,6 +46,11 @@ const rule: Rule.RuleModule = {
             items: { type: "string" },
             description: "JSX attributes to ignore",
           },
+          "ignored-function-calls": {
+            type: "array",
+            items: { type: "string" },
+            description: "Function calls to ignore",
+          },
         },
         additionalProperties: false,
       },
@@ -47,6 +58,7 @@ const rule: Rule.RuleModule = {
   },
   create: context => {
     let jsxAttributeStack: string[] = []
+    let callStack: string[] = []
 
     function handleNode(
       node: AST.Node | BaseNode | Node,
@@ -62,6 +74,20 @@ const rule: Rule.RuleModule = {
         jsxAttributeStack.length > 0 &&
         jsxAttributeStack.some(attributeName =>
           jsxAttributesToIgnore.includes(attributeName)
+        )
+      ) {
+        return
+      }
+
+      // Skip text replacement if the node is inside a function call that should be ignored.
+      const functionCallsToIgnore = context.options[0]?.[
+        "ignored-function-calls"
+      ] ?? ["Error"]
+      if (
+        functionCallsToIgnore.length > 0 &&
+        callStack.length > 0 &&
+        callStack.some(functionName =>
+          functionCallsToIgnore.includes(functionName)
         )
       ) {
         return
@@ -168,6 +194,18 @@ const rule: Rule.RuleModule = {
       },
       "JSXAttribute:exit": () => {
         jsxAttributeStack.pop()
+      },
+      CallExpression: (node: CallExpression) => {
+        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+      },
+      "CallExpression:exit": (node: CallExpression) => {
+        if (node.callee.type === "Identifier") callStack.pop()
+      },
+      NewExpression: (node: NewExpression) => {
+        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+      },
+      "NewExpression:exit": (node: NewExpression) => {
+        if (node.callee.type === "Identifier") callStack.pop()
       },
       TemplateLiteral: (node: TemplateLiteral) => {
         const parent = (node as unknown as { parent: Node }).parent

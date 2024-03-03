@@ -37,6 +37,9 @@ ruleTester.run("curly-quotes", rule, {
     {
       code: "<div className={clsx(\"after:contents-['']\", \"before:contents-['']\")} />",
     },
+    {
+      code: 'throw new Error("Shouldn\'t have quotes " + upperCase("replaced \\"\\":)"));',
+    },
   ],
   invalid: [
     /**
