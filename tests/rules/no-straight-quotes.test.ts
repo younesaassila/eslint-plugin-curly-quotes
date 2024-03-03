@@ -32,6 +32,12 @@ ruleTester.run("curly-quotes", rule, {
       code: "String.raw`Hello, 'world'`",
     },
     {
+      code: "<style>{\".heading::after { content: ''; }\"}</style>",
+    },
+    {
+      code: "<script>var a = '';</script>",
+    },
+    {
       code: "<div className=\"after:contents-[''] before:contents-['']\" />",
     },
     {

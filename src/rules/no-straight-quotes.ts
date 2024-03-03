@@ -3,6 +3,7 @@ import {
   type JSXText,
   type Node as BaseNode,
   type JSXAttribute,
+  type JSXOpeningElement,
   type CallExpression,
   type NewExpression,
 } from "@babel/types"
@@ -41,6 +42,11 @@ const rule: Rule.RuleModule = {
             type: "string",
             description: "Double closing typographic quotation mark",
           },
+          "ignored-jsx-elements": {
+            type: "array",
+            items: { type: "string" },
+            description: "JSX elements to ignore",
+          },
           "ignored-jsx-attributes": {
             type: "array",
             items: { type: "string" },
@@ -57,6 +63,7 @@ const rule: Rule.RuleModule = {
     ],
   },
   create: context => {
+    let jsxElementStack: string[] = []
     let jsxAttributeStack: string[] = []
     let callStack: string[] = []
 
@@ -64,13 +71,26 @@ const rule: Rule.RuleModule = {
       node: AST.Node | BaseNode | Node,
       textTrimValue: number
     ) {
+      // Skip text replacement if the node is inside a JSX element that should be ignored.
+      const jsxElementsToIgnore = context.options[0]?.[
+        "ignored-jsx-elements"
+      ] ?? ["script", "style"]
+      if (
+        jsxElementsToIgnore.length > 0 &&
+        jsxElementStack.length > 0 &&
+        jsxElementStack.some(attributeName =>
+          jsxElementsToIgnore.includes(attributeName)
+        )
+      ) {
+        return
+      }
+
       // Skip text replacement if the node is inside a JSX attribute that should be ignored.
       const jsxAttributesToIgnore = context.options[0]?.[
         "ignored-jsx-attributes"
       ] ?? ["className"]
-      const shouldIgnoreJsxAttribute = jsxAttributesToIgnore.length > 0
       if (
-        shouldIgnoreJsxAttribute &&
+        jsxAttributesToIgnore.length > 0 &&
         jsxAttributeStack.length > 0 &&
         jsxAttributeStack.some(attributeName =>
           jsxAttributesToIgnore.includes(attributeName)
@@ -194,6 +214,21 @@ const rule: Rule.RuleModule = {
       },
       "JSXAttribute:exit": () => {
         jsxAttributeStack.pop()
+      },
+      JSXOpeningElement: (node: JSXOpeningElement) => {
+        if (!node.selfClosing) {
+          jsxElementStack.push(
+            node.name.type === "JSXIdentifier"
+              ? node.name.name
+              : node.name.type === "JSXMemberExpression"
+              ? node.name.property.name
+              : // JSXNamespacedName (e.g. xlink:href)
+                node.name.namespace.name + ":" + node.name.name.name
+          )
+        }
+      },
+      JSXClosingElement: () => {
+        jsxElementStack.pop()
       },
       CallExpression: (node: CallExpression) => {
         if (node.callee.type === "Identifier") callStack.push(node.callee.name)
