@@ -31,6 +31,12 @@ ruleTester.run("curly-quotes", rule, {
     {
       code: "String.raw`Hello, 'world'`",
     },
+    {
+      code: "<div className=\"after:contents-[''] before:contents-['']\" />",
+    },
+    {
+      code: "<div className={clsx(\"after:contents-['']\", \"before:contents-['']\")} />",
+    },
   ],
   invalid: [
     /**

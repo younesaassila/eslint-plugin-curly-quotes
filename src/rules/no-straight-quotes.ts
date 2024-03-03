@@ -1,5 +1,5 @@
 import type { AST } from "vue-eslint-parser"
-import type { JSXText, Node as BaseNode } from "@babel/types"
+import type { JSXText, Node as BaseNode, JSXAttribute } from "@babel/types"
 import type { Literal, Node, TemplateLiteral } from "estree"
 import type { Rule } from "eslint"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
@@ -35,16 +35,38 @@ const rule: Rule.RuleModule = {
             type: "string",
             description: "Double closing typographic quotation mark",
           },
+          "ignored-jsx-attributes": {
+            type: "array",
+            items: { type: "string" },
+            description: "JSX attributes to ignore",
+          },
         },
         additionalProperties: false,
       },
     ],
   },
   create: context => {
+    let jsxAttributeStack: string[] = []
+
     function handleNode(
       node: AST.Node | BaseNode | Node,
       textTrimValue: number
     ) {
+      // Skip text replacement if the node is inside a JSX attribute that should be ignored.
+      const jsxAttributesToIgnore = context.options[0]?.[
+        "ignored-jsx-attributes"
+      ] ?? ["className"]
+      const shouldIgnoreJsxAttribute = jsxAttributesToIgnore.length > 0
+      if (
+        shouldIgnoreJsxAttribute &&
+        jsxAttributeStack.length > 0 &&
+        jsxAttributeStack.some(attributeName =>
+          jsxAttributesToIgnore.includes(attributeName)
+        )
+      ) {
+        return
+      }
+
       const text = context.getSourceCode().getText(node as Node)
       const ignoredIndexRanges = getIgnoredIndexRanges(node as Node) // e.g. expressions in template literals
 
@@ -134,6 +156,19 @@ const rule: Rule.RuleModule = {
     return {
       JSXText: (node: JSXText) => handleNode(node, 0),
       Literal: (node: Literal) => handleNode(node, 1),
+      JSXAttribute: (node: JSXAttribute) => {
+        if (node.name.type === "JSXIdentifier") {
+          jsxAttributeStack.push(node.name.name)
+        } else {
+          // JSXNamespacedName (e.g. xlink:href)
+          jsxAttributeStack.push(
+            node.name.namespace.name + ":" + node.name.name.name
+          )
+        }
+      },
+      "JSXAttribute:exit": () => {
+        jsxAttributeStack.pop()
+      },
       TemplateLiteral: (node: TemplateLiteral) => {
         const parent = (node as unknown as { parent: Node }).parent
         const hasTag =
