@@ -5,6 +5,7 @@
     "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "noEmit": true,
+    "resolveJsonModule": true,
     "strict": true
   }
 }

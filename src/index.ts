@@ -1,6 +1,11 @@
+import { name, version } from "../package.json"
 import noStraightQuotes from "./rules/no-straight-quotes"
 
-module.exports = {
+export default {
+  meta: {
+    name,
+    version,
+  },
   rules: {
     "no-straight-quotes": noStraightQuotes,
   },
