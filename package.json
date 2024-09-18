@@ -29,6 +29,7 @@
     "build": "tsup src/index.ts --cjsInterop --dts --splitting --minify",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
+    "type-check": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "test": "jest"
   },
