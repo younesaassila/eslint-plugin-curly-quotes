@@ -173,7 +173,7 @@ const rule: Rule.RuleModule = {
     }
 
     // Vue.js
-    if (context.parserServices.defineTemplateBodyVisitor) {
+    if (context.parserServices?.defineTemplateBodyVisitor) {
       return context.parserServices.defineTemplateBodyVisitor(
         // Event handlers for <template>.
         {
