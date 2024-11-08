@@ -48,43 +48,63 @@ npm i --save-dev eslint-plugin-curly-quotes
 
 ## Usage
 
-Add `eslint-plugin-curly-quotes` to the `plugins` section of your `.eslintrc` configuration file:
+Add `eslint-plugin-curly-quotes` to the `plugins` section of your `eslint.config.js` configuration file:
 
-```json
-{
-  "plugins": ["curly-quotes"]
-}
+```js
+import curlyQuotes from "eslint-plugin-curly-quotes"
+
+export default [
+  {
+    plugins: {
+      "curly-quotes": curlyQuotes,
+    },
+  },
+]
 ```
 
 Then add the `no-straight-quotes` rule to the `rules` section:
 
-```json
-{
-  "rules": {
-    "curly-quotes/no-straight-quotes": "warn"
-  }
-}
+```js
+import curlyQuotes from "eslint-plugin-curly-quotes"
+
+export default [
+  {
+    plugins: {
+      "curly-quotes": curlyQuotes,
+    },
+    rules: {
+      "curly-quotes/no-straight-quotes": "warn",
+    },
+  },
+]
 ```
 
 You may customize the characters used to replace straight quotes:
 
-```json
-{
-  "rules": {
-    "curly-quotes/no-straight-quotes": [
-      "warn",
-      {
-        "single-opening": "‘",
-        "single-closing": "’", // This character is also used to replace apostrophes.
-        "double-opening": "“",
-        "double-closing": "”",
-        "ignored-jsx-elements": ["script", "style"], // Straight quotes in these JSX elements are ignored.
-        "ignored-jsx-attributes": ["className"], // Straight quotes in these JSX attributes are ignored.
-        "ignored-function-calls": ["Error"] // Straight quotes passed as parameters to these functions are ignored.
-      }
-    ]
-  }
-}
+```js
+import curlyQuotes from "eslint-plugin-curly-quotes"
+
+export default [
+  {
+    plugins: {
+      "curly-quotes": curlyQuotes,
+    },
+    rules: {
+      "curly-quotes/no-straight-quotes": [
+        "warn",
+        {
+          "single-opening": "‘",
+          "single-closing": "’", // This character is also used to replace apostrophes.
+          "double-opening": "“",
+          "double-closing": "”",
+          "ignored-jsx-elements": ["script", "style"], // Straight quotes in these JSX elements are ignored.
+          "ignored-jsx-attributes": ["className"], // Straight quotes in these JSX attributes are ignored.
+          "ignored-function-calls": ["Error"], // Straight quotes passed as parameters to these functions are ignored.
+        },
+      ],
+    },
+  },
+]
 ```
 
 ## Acknowledgements
