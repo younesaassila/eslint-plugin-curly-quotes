@@ -2,11 +2,13 @@ import { RuleTester } from "eslint"
 import rule from "../../src/rules/no-straight-quotes"
 
 const ruleTester = new RuleTester({
-  parserOptions: {
-    ecmaVersion: 2020,
-    sourceType: "module",
-    ecmaFeatures: {
-      jsx: true,
+  languageOptions: {
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true,
+      },
     },
   },
 })
