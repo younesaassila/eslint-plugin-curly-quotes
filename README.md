@@ -48,7 +48,7 @@ npm i --save-dev eslint-plugin-curly-quotes
 
 ## Usage
 
-Add `eslint-plugin-curly-quotes` to the `plugins` section of your `eslint.config.js` configuration file:
+Add `eslint-plugin-curly-quotes` to the `plugins` section of your `eslint.config.mjs` configuration file:
 
 ```js
 import curlyQuotes from "eslint-plugin-curly-quotes"
