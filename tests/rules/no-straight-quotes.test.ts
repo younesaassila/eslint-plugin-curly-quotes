@@ -131,5 +131,23 @@ ruleTester.run("curly-quotes", rule, {
       output: '<Component name="I’m a ‘web developer’"></Component>',
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
+    /**
+     * Unnecessary backslashes
+     */
+    {
+      code: String.raw`"Let\'s go!"`,
+      output: String.raw`"Let’s go!"`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`"Let\\'s go!"`,
+      output: String.raw`"Let\\’s go!"`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`"Let\\\'s go!"`,
+      output: String.raw`"Let\\’s go!"`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
   ],
 })
