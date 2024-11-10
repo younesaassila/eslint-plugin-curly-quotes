@@ -2,11 +2,13 @@ import { RuleTester } from "eslint"
 import rule from "../../src/rules/no-straight-quotes"
 
 const ruleTester = new RuleTester({
-  parserOptions: {
-    ecmaVersion: 2020,
-    sourceType: "module",
-    ecmaFeatures: {
-      jsx: true,
+  languageOptions: {
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true,
+      },
     },
   },
 })
@@ -127,6 +129,24 @@ ruleTester.run("curly-quotes", rule, {
     {
       code: "<Component name=\"I'm a 'web developer'\"></Component>",
       output: '<Component name="I’m a ‘web developer’"></Component>',
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    /**
+     * Unnecessary backslashes
+     */
+    {
+      code: String.raw`"Let\'s go!"`,
+      output: String.raw`"Let’s go!"`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`"Let\\'s go!"`,
+      output: String.raw`"Let\\’s go!"`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`"Let\\\'s go!"`,
+      output: String.raw`"Let\\’s go!"`,
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
   ],

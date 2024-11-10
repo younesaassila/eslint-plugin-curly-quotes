@@ -25,13 +25,14 @@ export default function replaceQuotes(
       .matchAll(quoteRegex),
   ]
   const indices = matches
-    .map(match => (match.index as number) + textTrimValue) // See https://github.com/microsoft/TypeScript/issues/36788
+    .map(match => match.index + textTrimValue)
     .filter(index =>
       ignoredIndexRanges.every(range => index < range[0] || range[1] <= index)
     )
 
   let textChars = text.split("")
   let openedQuotes = 0
+  let escapedQuotesIndices: number[] = []
 
   const setOpeningCharacter = (index: number, updateOpenedQuotes = true) => {
     textChars[index] = openingCharacter
@@ -43,18 +44,18 @@ export default function replaceQuotes(
   }
 
   // Adapted from https://stackoverflow.com/questions/509685/ideas-for-converting-straight-quotes-to-curly-quotes
-  for (const index of indices) {
-    const previousChar = textChars[index - 1]
-    const nextChar = textChars[index + 1]
+  for (let i = 0; i < indices.length; i++) {
+    const index = indices[i]
+    const previousChar = index > 0 ? textChars[index - 1] : ""
+    const nextChar = index < textChars.length - 1 ? textChars[index + 1] : ""
 
     const isOpeningCharacter =
-      ["\n", " "].includes(previousChar) && !["\n", " "].includes(nextChar)
+      isWhitespaceOrEmpty(previousChar) && !isWhitespaceOrEmpty(nextChar)
     const isClosingCharacter =
-      !["\r", "\n", " "].includes(previousChar) &&
-      ["\r", "\n", " "].includes(nextChar)
+      !isWhitespaceOrEmpty(previousChar) && isWhitespaceOrEmpty(nextChar)
     const isApostrophe =
       straightCharacter === "'" &&
-      ((!["\r", "\n", " "].includes(previousChar) && index !== textTrimValue) || // Is not at beginning of text nor preceded by whitespace character
+      ((!isWhitespaceOrEmpty(previousChar) && index !== textTrimValue) || // Is not at beginning of text nor preceded by whitespace character
         text.length - 2 * textTrimValue === 1) // Is only character
 
     if (isOpeningCharacter) setOpeningCharacter(index)
@@ -64,7 +65,31 @@ export default function replaceQuotes(
       if (openedQuotes === 0) setOpeningCharacter(index)
       else setClosingCharacter(index)
     }
+
+    const segmentStart = i > 0 ? indices[i - 1] : 0
+    const segment = text.substring(segmentStart, index)
+    if (isEscapedQuote(segment)) {
+      escapedQuotesIndices.push(index - 1)
+    }
+  }
+
+  // Remove unnecessary backslashes before replaced quotes.
+  if (escapedQuotesIndices.length > 0) {
+    for (let i = escapedQuotesIndices.length - 1; i >= 0; i--) {
+      textChars.splice(escapedQuotesIndices[i], 1)
+    }
   }
 
   return textChars.join("")
+}
+
+function isWhitespaceOrEmpty(character: string): boolean {
+  return /^\s?$/.test(character)
+}
+
+function isEscapedQuote(segment: string): boolean {
+  // A quote is escaped if it is preceded by an odd number of backslashes.
+  const match = segment.match(/\\+$/)
+  if (!match) return false
+  return match[0].length % 2 === 1
 }

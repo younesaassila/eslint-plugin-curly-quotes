@@ -12,6 +12,16 @@ import type { Rule } from "eslint"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
 import replaceQuotes from "../lib/replaceQuotes"
 
+const DEFAULT_OPTIONS = {
+  "single-opening": "‘",
+  "single-closing": "’",
+  "double-opening": "“",
+  "double-closing": "”",
+  "ignored-jsx-elements": ["script", "style"],
+  "ignored-jsx-attributes": ["className"],
+  "ignored-function-calls": ["Error"],
+}
+
 const rule: Rule.RuleModule = {
   meta: {
     type: "suggestion",
@@ -72,9 +82,9 @@ const rule: Rule.RuleModule = {
       textTrimValue: number
     ) {
       // Skip text replacement if the node is inside a JSX element that should be ignored.
-      const jsxElementsToIgnore = context.options[0]?.[
-        "ignored-jsx-elements"
-      ] ?? ["script", "style"]
+      const jsxElementsToIgnore =
+        context.options[0]?.["ignored-jsx-elements"] ??
+        DEFAULT_OPTIONS["ignored-jsx-elements"]
       if (
         jsxElementsToIgnore.length > 0 &&
         jsxElementStack.length > 0 &&
@@ -86,9 +96,9 @@ const rule: Rule.RuleModule = {
       }
 
       // Skip text replacement if the node is inside a JSX attribute that should be ignored.
-      const jsxAttributesToIgnore = context.options[0]?.[
-        "ignored-jsx-attributes"
-      ] ?? ["className"]
+      const jsxAttributesToIgnore =
+        context.options[0]?.["ignored-jsx-attributes"] ??
+        DEFAULT_OPTIONS["ignored-jsx-attributes"]
       if (
         jsxAttributesToIgnore.length > 0 &&
         jsxAttributeStack.length > 0 &&
@@ -100,9 +110,9 @@ const rule: Rule.RuleModule = {
       }
 
       // Skip text replacement if the node is inside a function call that should be ignored.
-      const functionCallsToIgnore = context.options[0]?.[
-        "ignored-function-calls"
-      ] ?? ["Error"]
+      const functionCallsToIgnore =
+        context.options[0]?.["ignored-function-calls"] ??
+        DEFAULT_OPTIONS["ignored-function-calls"]
       if (
         functionCallsToIgnore.length > 0 &&
         callStack.length > 0 &&
@@ -113,7 +123,7 @@ const rule: Rule.RuleModule = {
         return
       }
 
-      const text = context.getSourceCode().getText(node as Node)
+      const text = context.sourceCode.getText(node as Node)
       const ignoredIndexRanges = getIgnoredIndexRanges(node as Node) // e.g. expressions in template literals
 
       // Filter out unwanted characters (e.g. expressions in template literals).
@@ -153,16 +163,20 @@ const rule: Rule.RuleModule = {
               text,
               textTrimValue,
               "'",
-              context.options[0]?.["single-opening"] ?? "‘",
-              context.options[0]?.["single-closing"] ?? "’",
+              context.options[0]?.["single-opening"] ??
+                DEFAULT_OPTIONS["single-opening"],
+              context.options[0]?.["single-closing"] ??
+                DEFAULT_OPTIONS["single-closing"],
               ignoredIndexRanges
             )
             fixedText = replaceQuotes(
               fixedText,
               textTrimValue,
               '"',
-              context.options[0]?.["double-opening"] ?? "“",
-              context.options[0]?.["double-closing"] ?? "”",
+              context.options[0]?.["double-opening"] ??
+                DEFAULT_OPTIONS["double-opening"],
+              context.options[0]?.["double-closing"] ??
+                DEFAULT_OPTIONS["double-closing"],
               ignoredIndexRanges
             )
 
@@ -173,8 +187,8 @@ const rule: Rule.RuleModule = {
     }
 
     // Vue.js
-    if (context.parserServices?.defineTemplateBodyVisitor) {
-      return context.parserServices.defineTemplateBodyVisitor(
+    if (context.sourceCode.parserServices?.defineTemplateBodyVisitor) {
+      return context.sourceCode.parserServices.defineTemplateBodyVisitor(
         // Event handlers for <template>.
         {
           Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
