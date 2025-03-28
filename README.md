@@ -98,8 +98,13 @@ export default [
           "double-opening": "“",
           "double-closing": "”",
           "ignored-jsx-elements": ["script", "style"], // Straight quotes in these JSX elements are ignored.
-          "ignored-jsx-attributes": ["className"], // Straight quotes in these JSX attributes are ignored.
-          "ignored-function-calls": ["Error"], // Straight quotes passed as parameters to these functions are ignored.
+          "ignored-jsx-attributes": ["className", "id", "key", "style"], // Straight quotes in these JSX attributes are ignored.
+          "ignored-function-calls": [
+            "document.querySelector",
+            "document.querySelectorAll",
+            "Error",
+            "RegExp", // This also ignores regular expression literals.
+          ], // Straight quotes passed as parameters to these functions are ignored.
         },
       ],
     },

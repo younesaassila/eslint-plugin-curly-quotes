@@ -1,25 +1,33 @@
 import type { AST } from "vue-eslint-parser"
-import {
-  type JSXText,
-  type Node as BaseNode,
-  type JSXAttribute,
-  type JSXOpeningElement,
-  type CallExpression,
-  type NewExpression,
+import type {
+  JSXText,
+  Node as BaseNode,
+  JSXAttribute,
+  JSXOpeningElement,
+  CallExpression,
+  NewExpression,
 } from "@babel/types"
 import type { Literal, Node, TemplateLiteral } from "estree"
 import type { Rule } from "eslint"
+import type { RuleOptions } from "../types"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
 import replaceQuotes from "../lib/replaceQuotes"
 
-const DEFAULT_OPTIONS = {
+const defaultOptions: RuleOptions = {
   "single-opening": "‘",
   "single-closing": "’",
   "double-opening": "“",
   "double-closing": "”",
   "ignored-jsx-elements": ["script", "style"],
-  "ignored-jsx-attributes": ["className"],
-  "ignored-function-calls": ["Error"],
+  "ignored-jsx-attributes": ["className", "id", "key", "style"],
+  "ignored-function-calls": [
+    "document.querySelector",
+    "document.querySelectorAll",
+    "Error",
+    "RegExp",
+  ],
+  // TODO: `ignored-object-properties` option
+  // TODO: `ignored-vue-attributes` & `ignored-vue-elements` options
 }
 
 const rule: Rule.RuleModule = {
@@ -73,6 +81,15 @@ const rule: Rule.RuleModule = {
     ],
   },
   create: context => {
+    const options: RuleOptions = {
+      ...defaultOptions,
+      ...(context.options[0] ?? {}),
+    }
+
+    const jsxElementsToIgnore = options["ignored-jsx-elements"]
+    const jsxAttributesToIgnore = options["ignored-jsx-attributes"]
+    const functionCallsToIgnore = options["ignored-function-calls"]
+
     let jsxElementStack: string[] = []
     let jsxAttributeStack: string[] = []
     let callStack: string[] = []
@@ -82,9 +99,6 @@ const rule: Rule.RuleModule = {
       textTrimValue: number
     ) {
       // Skip text replacement if the node is inside a JSX element that should be ignored.
-      const jsxElementsToIgnore =
-        context.options[0]?.["ignored-jsx-elements"] ??
-        DEFAULT_OPTIONS["ignored-jsx-elements"]
       if (
         jsxElementsToIgnore.length > 0 &&
         jsxElementStack.length > 0 &&
@@ -96,9 +110,6 @@ const rule: Rule.RuleModule = {
       }
 
       // Skip text replacement if the node is inside a JSX attribute that should be ignored.
-      const jsxAttributesToIgnore =
-        context.options[0]?.["ignored-jsx-attributes"] ??
-        DEFAULT_OPTIONS["ignored-jsx-attributes"]
       if (
         jsxAttributesToIgnore.length > 0 &&
         jsxAttributeStack.length > 0 &&
@@ -110,9 +121,6 @@ const rule: Rule.RuleModule = {
       }
 
       // Skip text replacement if the node is inside a function call that should be ignored.
-      const functionCallsToIgnore =
-        context.options[0]?.["ignored-function-calls"] ??
-        DEFAULT_OPTIONS["ignored-function-calls"]
       if (
         functionCallsToIgnore.length > 0 &&
         callStack.length > 0 &&
@@ -124,10 +132,10 @@ const rule: Rule.RuleModule = {
       }
 
       const text = context.sourceCode.getText(node as Node)
-      const ignoredIndexRanges = getIgnoredIndexRanges(node as Node) // e.g. expressions in template literals
+      const ignoredIndexRanges = getIgnoredIndexRanges(node as Node) // e.g. expressions in template literals (`${expression}`)
 
-      // Filter out unwanted characters (e.g. expressions in template literals).
-      const filteredText = text
+      // Check if text includes straight quotes.
+      const textWithoutIgnoredIndexRanges = text
         .split("")
         .filter((_char, index) => {
           if (ignoredIndexRanges === null) return true
@@ -136,86 +144,58 @@ const rule: Rule.RuleModule = {
           )
         })
         .join("")
-
-      // Trim text to ignore string delimiters.
-      const trimmedText = filteredText.substring(
+      const textWithoutDelimiters = textWithoutIgnoredIndexRanges.substring(
         textTrimValue,
         text.length - textTrimValue
       )
-
       const includesStraightQuotes =
-        trimmedText.includes("'") || trimmedText.includes('"')
-
+        textWithoutDelimiters.includes("'") ||
+        textWithoutDelimiters.includes('"')
       if (!includesStraightQuotes) return
 
       if (ignoredIndexRanges === null) {
-        // Not providing a fixer to avoid replacing quotes in expressions.
-        context.report({
+        return context.report({
           node: node as Node,
           messageId: "preferCurlyQuotes",
-        })
-      } else {
-        context.report({
-          node: node as Node,
-          messageId: "preferCurlyQuotes",
-          fix(fixer) {
-            let fixedText = replaceQuotes(
-              text,
-              textTrimValue,
-              "'",
-              context.options[0]?.["single-opening"] ??
-                DEFAULT_OPTIONS["single-opening"],
-              context.options[0]?.["single-closing"] ??
-                DEFAULT_OPTIONS["single-closing"],
-              ignoredIndexRanges
-            )
-            fixedText = replaceQuotes(
-              fixedText,
-              textTrimValue,
-              '"',
-              context.options[0]?.["double-opening"] ??
-                DEFAULT_OPTIONS["double-opening"],
-              context.options[0]?.["double-closing"] ??
-                DEFAULT_OPTIONS["double-closing"],
-              ignoredIndexRanges
-            )
-
-            return fixer.replaceText(node as Node, fixedText)
-          },
+          // No fix provided to avoid replacing quotes in expressions.
         })
       }
-    }
 
-    // Vue.js
-    if (context.sourceCode.parserServices?.defineTemplateBodyVisitor) {
-      return context.sourceCode.parserServices.defineTemplateBodyVisitor(
-        // Event handlers for <template>.
-        {
-          Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
-          TemplateLiteral: (node: AST.ESLintTemplateLiteral) =>
-            handleNode(node, 1),
-          VLiteral: (node: AST.VLiteral) => handleNode(node, 1),
-          VText: (node: AST.VText) => handleNode(node, 0),
+      return context.report({
+        node: node as Node,
+        messageId: "preferCurlyQuotes",
+        fix(fixer) {
+          let fixedText = replaceQuotes(
+            text,
+            textTrimValue,
+            "'",
+            options["single-opening"],
+            options["single-closing"],
+            ignoredIndexRanges
+          )
+          fixedText = replaceQuotes(
+            fixedText,
+            textTrimValue,
+            '"',
+            options["double-opening"],
+            options["double-closing"],
+            ignoredIndexRanges
+          )
+          return fixer.replaceText(node as Node, fixedText)
         },
-        // Event handlers for <script> or scripts.
-        {
-          JSXText: (node: JSXText) => handleNode(node, 0),
-          Literal: (node: AST.ESLintLiteral) => handleNode(node, 1),
-          TemplateLiteral: (node: AST.ESLintTemplateLiteral) => {
-            const parent = (node as unknown as { parent: AST.Node }).parent
-            const hasTag =
-              parent.type === "TaggedTemplateExpression" &&
-              node === parent.quasi
-            if (hasTag) return
-            return handleNode(node, 1)
-          },
-        }
-      )
+      })
     }
 
-    return {
+    //#region Visitors
+
+    const vueVisitor = {
+      VLiteral: (node: AST.VLiteral) => handleNode(node, 1),
+      VText: (node: AST.VText) => handleNode(node, 0),
+      // TODO: Handle VAttribute and VElement
+    }
+
+    const jsxVisitor = {
       JSXText: (node: JSXText) => handleNode(node, 0),
-      Literal: (node: Literal) => handleNode(node, 1),
       JSXAttribute: (node: JSXAttribute) => {
         if (node.name.type === "JSXIdentifier") {
           jsxAttributeStack.push(node.name.name)
@@ -244,17 +224,14 @@ const rule: Rule.RuleModule = {
       JSXClosingElement: () => {
         jsxElementStack.pop()
       },
-      CallExpression: (node: CallExpression) => {
-        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
-      },
-      "CallExpression:exit": (node: CallExpression) => {
-        if (node.callee.type === "Identifier") callStack.pop()
-      },
-      NewExpression: (node: NewExpression) => {
-        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
-      },
-      "NewExpression:exit": (node: NewExpression) => {
-        if (node.callee.type === "Identifier") callStack.pop()
+    }
+
+    const scriptVisitor = {
+      Literal: (node: Literal) => {
+        if ("regex" in node && functionCallsToIgnore.includes("RegExp")) {
+          return
+        }
+        return handleNode(node, 1)
       },
       TemplateLiteral: (node: TemplateLiteral) => {
         const parent = (node as unknown as { parent: Node }).parent
@@ -263,6 +240,64 @@ const rule: Rule.RuleModule = {
         if (hasTag) return
         return handleNode(node, 1)
       },
+      CallExpression: (node: CallExpression) => {
+        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+        if (node.callee.type === "MemberExpression") {
+          let propertyNames = []
+          let currentNode: AST.Node | BaseNode | Node = node.callee
+          while (
+            currentNode.type === "MemberExpression" &&
+            currentNode.property.type === "Identifier"
+          ) {
+            propertyNames.push(currentNode.property.name)
+            currentNode = currentNode.object
+          }
+          if (currentNode.type === "Identifier") {
+            propertyNames.push(currentNode.name)
+          }
+          if (propertyNames.length > 0) {
+            callStack.push(propertyNames.reverse().join("."))
+          }
+        }
+      },
+      "CallExpression:exit": (node: CallExpression) => {
+        if (node.callee.type === "Identifier") callStack.pop()
+        if (
+          node.callee.type === "MemberExpression" &&
+          node.callee.property.type === "Identifier" // Check that the while loop above ran at least once.
+        ) {
+          callStack.pop()
+        }
+      },
+      NewExpression: (node: NewExpression) => {
+        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+      },
+      "NewExpression:exit": (node: NewExpression) => {
+        if (node.callee.type === "Identifier") callStack.pop()
+      },
+    }
+
+    //#endregion
+
+    // Vue.js
+    if (context.sourceCode.parserServices?.defineTemplateBodyVisitor) {
+      return context.sourceCode.parserServices.defineTemplateBodyVisitor(
+        // Event handlers for <template>.
+        {
+          ...scriptVisitor,
+          ...vueVisitor,
+        },
+        // Event handlers for <script> or scripts.
+        {
+          ...scriptVisitor,
+          ...jsxVisitor,
+        }
+      )
+    }
+
+    return {
+      ...scriptVisitor,
+      ...jsxVisitor,
     }
   },
 }
