@@ -26,20 +26,22 @@ const vueRuleTester = new RuleTester(
   Object.assign({}, ...pluginVue.configs["flat/base"])
 )
 
-const options: RuleOptions = {
-  "single-opening": "‘",
-  "single-closing": "’",
-  "double-opening": "“",
-  "double-closing": "”",
-  "ignored-jsx-elements": ["script", "style"],
-  "ignored-jsx-attributes": ["className", "id", "key", "style"],
-  "ignored-function-calls": [
-    "document.querySelector",
-    "document.querySelectorAll",
-    "Error",
-    "RegExp",
-  ],
-}
+const options: [RuleOptions] = [
+  {
+    "single-opening": "‘",
+    "single-closing": "’",
+    "double-opening": "“",
+    "double-closing": "”",
+    "ignored-jsx-elements": ["script", "style"],
+    "ignored-jsx-attributes": ["className", "id", "key", "style"],
+    "ignored-function-calls": [
+      "document.querySelector",
+      "document.querySelectorAll",
+      "Error",
+      "RegExp",
+    ],
+  },
+]
 
 scriptRuleTester.run("curly-quotes", rule, {
   valid: [
