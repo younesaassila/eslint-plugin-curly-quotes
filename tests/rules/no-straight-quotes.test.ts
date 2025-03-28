@@ -208,6 +208,12 @@ vueRuleTester.run("curly-quotes", rule, {
     {
       code: "<script>let a = { name: 'Hello' };</script>",
     },
+    {
+      code: `<template><div data-text="Hello World"></div></template>`,
+    },
+    {
+      code: `<template><div :data-text="'Hello World'"></div></template>`,
+    },
   ].map(caseItem => ({ ...caseItem, options, filename: "test.vue" })),
   invalid: [
     {
@@ -231,6 +237,16 @@ vueRuleTester.run("curly-quotes", rule, {
     {
       code: "<script>let a = { name: 'I\\'m a \"web developer\"' };</script>",
       output: "<script>let a = { name: 'I’m a “web developer”' };</script>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: `<template><div data-text="I'm a web dev"></div></template>`,
+      output: `<template><div data-text="I’m a web dev"></div></template>`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "VLiteral" }],
+    },
+    {
+      code: `<template><div :data-text="'I\\'m a web dev'"></div></template>`,
+      output: `<template><div :data-text="'I’m a web dev'"></div></template>`,
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
   ].map(caseItem => ({ ...caseItem, options, filename: "test.vue" })),

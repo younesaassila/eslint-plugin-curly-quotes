@@ -27,7 +27,7 @@ const defaultOptions: RuleOptions = {
     "RegExp",
   ],
   // TODO: `ignored-object-properties` option
-  // TODO: `ignored-vue-attributes` & `ignored-vue-elements` options
+  // TODO: Rename `ignored-jsx-elements` & `ignored-jsx-attributes` options to `ignored-elements` & `ignored-attributes`
 }
 
 const rule: Rule.RuleModule = {
@@ -86,35 +86,35 @@ const rule: Rule.RuleModule = {
       ...(context.options[0] ?? {}),
     }
 
-    const jsxElementsToIgnore = options["ignored-jsx-elements"]
-    const jsxAttributesToIgnore = options["ignored-jsx-attributes"]
+    const elementsToIgnore = options["ignored-jsx-elements"]
+    const attributesToIgnore = options["ignored-jsx-attributes"]
     const functionCallsToIgnore = options["ignored-function-calls"]
 
-    let jsxElementStack: string[] = []
-    let jsxAttributeStack: string[] = []
+    let elementStack: string[] = []
+    let attributeStack: string[] = []
     let callStack: string[] = []
 
     function handleNode(
       node: AST.Node | BaseNode | Node,
       textTrimValue: number
     ) {
-      // Skip text replacement if the node is inside a JSX element that should be ignored.
+      // Skip text replacement if the node is inside a JSX/Vue element that should be ignored.
       if (
-        jsxElementsToIgnore.length > 0 &&
-        jsxElementStack.length > 0 &&
-        jsxElementStack.some(attributeName =>
-          jsxElementsToIgnore.includes(attributeName)
+        elementsToIgnore.length > 0 &&
+        elementStack.length > 0 &&
+        elementStack.some(attributeName =>
+          elementsToIgnore.includes(attributeName)
         )
       ) {
         return
       }
 
-      // Skip text replacement if the node is inside a JSX attribute that should be ignored.
+      // Skip text replacement if the node is inside a JSX/Vue attribute that should be ignored.
       if (
-        jsxAttributesToIgnore.length > 0 &&
-        jsxAttributeStack.length > 0 &&
-        jsxAttributeStack.some(attributeName =>
-          jsxAttributesToIgnore.includes(attributeName)
+        attributesToIgnore.length > 0 &&
+        attributeStack.length > 0 &&
+        attributeStack.some(attributeName =>
+          attributesToIgnore.includes(attributeName)
         )
       ) {
         return
@@ -191,27 +191,52 @@ const rule: Rule.RuleModule = {
     const vueVisitor = {
       VLiteral: (node: AST.VLiteral) => handleNode(node, 1),
       VText: (node: AST.VText) => handleNode(node, 0),
-      // TODO: Handle VAttribute and VElement
+      VAttribute: (node: AST.VAttribute | AST.VDirective) => {
+        if (node.key.type === "VIdentifier") {
+          attributeStack.push(node.key.name)
+        } else if (
+          node.key.type === "VDirectiveKey" && // e.g. v-bind:href
+          node.key.argument?.type === "VIdentifier"
+        ) {
+          attributeStack.push(node.key.argument.name)
+        }
+      },
+      "VAttribute:exit": (node: AST.VAttribute | AST.VDirective) => {
+        if (node.key.type === "VIdentifier") {
+          attributeStack.pop()
+        } else if (
+          node.key.type === "VDirectiveKey" &&
+          node.key.argument?.type === "VIdentifier"
+        ) {
+          attributeStack.pop()
+        }
+      },
+      VElement: (node: AST.VElement) => {
+        elementStack.push(node.name)
+      },
+      "VElement:exit": () => {
+        elementStack.pop()
+      },
     }
 
     const jsxVisitor = {
       JSXText: (node: JSXText) => handleNode(node, 0),
       JSXAttribute: (node: JSXAttribute) => {
         if (node.name.type === "JSXIdentifier") {
-          jsxAttributeStack.push(node.name.name)
+          attributeStack.push(node.name.name)
         } else {
           // JSXNamespacedName (e.g. xlink:href)
-          jsxAttributeStack.push(
+          attributeStack.push(
             node.name.namespace.name + ":" + node.name.name.name
           )
         }
       },
       "JSXAttribute:exit": () => {
-        jsxAttributeStack.pop()
+        attributeStack.pop()
       },
       JSXOpeningElement: (node: JSXOpeningElement) => {
         if (!node.selfClosing) {
-          jsxElementStack.push(
+          elementStack.push(
             node.name.type === "JSXIdentifier"
               ? node.name.name
               : node.name.type === "JSXMemberExpression"
@@ -222,7 +247,7 @@ const rule: Rule.RuleModule = {
         }
       },
       JSXClosingElement: () => {
-        jsxElementStack.pop()
+        elementStack.pop()
       },
     }
 
@@ -241,8 +266,9 @@ const rule: Rule.RuleModule = {
         return handleNode(node, 1)
       },
       CallExpression: (node: CallExpression) => {
-        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
-        if (node.callee.type === "MemberExpression") {
+        if (node.callee.type === "Identifier") {
+          callStack.push(node.callee.name)
+        } else if (node.callee.type === "MemberExpression") {
           let propertyNames = []
           let currentNode: AST.Node | BaseNode | Node = node.callee
           while (
@@ -261,8 +287,9 @@ const rule: Rule.RuleModule = {
         }
       },
       "CallExpression:exit": (node: CallExpression) => {
-        if (node.callee.type === "Identifier") callStack.pop()
-        if (
+        if (node.callee.type === "Identifier") {
+          callStack.pop()
+        } else if (
           node.callee.type === "MemberExpression" &&
           node.callee.property.type === "Identifier" // Check that the while loop above ran at least once.
         ) {
@@ -270,10 +297,14 @@ const rule: Rule.RuleModule = {
         }
       },
       NewExpression: (node: NewExpression) => {
-        if (node.callee.type === "Identifier") callStack.push(node.callee.name)
+        if (node.callee.type === "Identifier") {
+          callStack.push(node.callee.name)
+        }
       },
       "NewExpression:exit": (node: NewExpression) => {
-        if (node.callee.type === "Identifier") callStack.pop()
+        if (node.callee.type === "Identifier") {
+          callStack.pop()
+        }
       },
     }
 
