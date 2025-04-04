@@ -276,5 +276,10 @@ vueRuleTester.run("curly-quotes", rule, {
       output: `<template><div :data-text="'I’m a web dev'"></div></template>`,
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
+    {
+      code: `<template><div>Hello <img />' World</div></template>`,
+      output: `<template><div>Hello <img />‘ World</div></template>`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "VText" }],
+    },
   ].map(caseItem => ({ ...caseItem, options, filename: "test.vue" })),
 })
