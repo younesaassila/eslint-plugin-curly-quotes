@@ -1,7 +1,17 @@
 import { RuleTester } from "eslint"
+import pluginVue from "eslint-plugin-vue"
+import { RuleOptions } from "../../src/types"
 import rule from "../../src/rules/no-straight-quotes"
 
-const ruleTester = new RuleTester({
+const scriptRuleTester = new RuleTester({
+  languageOptions: {
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+    },
+  },
+})
+const jsxRuleTester = new RuleTester({
   languageOptions: {
     parserOptions: {
       ecmaVersion: 2022,
@@ -12,8 +22,29 @@ const ruleTester = new RuleTester({
     },
   },
 })
+const vueRuleTester = new RuleTester(
+  Object.assign({}, ...pluginVue.configs["flat/base"])
+)
 
-ruleTester.run("curly-quotes", rule, {
+const options: [RuleOptions] = [
+  {
+    "single-opening": "‘",
+    "single-closing": "’",
+    "double-opening": "“",
+    "double-closing": "”",
+    "ignored-elements": ["script", "style"],
+    "ignored-attributes": ["className", "id", "key", "style"],
+    "ignored-function-calls": [
+      "document.querySelector",
+      "document.querySelectorAll",
+      "Error",
+      "RegExp",
+    ],
+    "ignored-object-properties": ["Content-Disposition"],
+  },
+]
+
+scriptRuleTester.run("curly-quotes", rule, {
   valid: [
     {
       code: '"No quotes"',
@@ -34,21 +65,27 @@ ruleTester.run("curly-quotes", rule, {
       code: "String.raw`Hello, 'world'`",
     },
     {
-      code: "<style>{\".heading::after { content: ''; }\"}</style>",
-    },
-    {
-      code: "<script>var a = '';</script>",
-    },
-    {
-      code: "<div className=\"after:contents-[''] before:contents-['']\" />",
-    },
-    {
-      code: "<div className={clsx(\"after:contents-['']\", \"before:contents-['']\")} />",
-    },
-    {
       code: 'throw new Error("Shouldn\'t have quotes " + upperCase("replaced \\"\\":)"));',
     },
-  ],
+    {
+      code: 'new RegExp("Shouldn\'t have quotes replaced", "g");',
+    },
+    {
+      code: "/Shouldn't have quotes replaced/g;",
+    },
+    {
+      code: "/''/g",
+    },
+    {
+      code: `var obj = { "Content-Disposition": 'Hello' }`,
+    },
+    {
+      code: `var obj = { "Content-Disposition": 'attachment; filename="hello.txt"' }`,
+    },
+    {
+      code: `var obj = { "Content-Disposition": { whatever: 'attachment; filename="hello.txt"' } }`,
+    },
+  ].map(caseItem => ({ ...caseItem, options })),
   invalid: [
     /**
      * Apostrophes
@@ -114,24 +151,6 @@ ruleTester.run("curly-quotes", rule, {
       errors: [{ messageId: "preferCurlyQuotes", type: "TemplateLiteral" }],
     },
     /**
-     * JSX
-     */
-    {
-      code: '<Component>I\'m a "web developer"</Component>',
-      output: "<Component>I’m a “web developer”</Component>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "JSXText" }],
-    },
-    {
-      code: '<Component>"Hello, world!"</Component>',
-      output: "<Component>“Hello, world!”</Component>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "JSXText" }],
-    },
-    {
-      code: "<Component name=\"I'm a 'web developer'\"></Component>",
-      output: '<Component name="I’m a ‘web developer’"></Component>',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
-    },
-    /**
      * Unnecessary backslashes
      */
     {
@@ -149,5 +168,118 @@ ruleTester.run("curly-quotes", rule, {
       output: String.raw`"Let\\’s go!"`,
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
-  ],
+    /**
+     * Object Properties
+     */
+    {
+      code: String.raw`var obj = { name: 'I\'m a "web developer"' }`,
+      output: String.raw`var obj = { name: 'I’m a “web developer”' }`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"' }`,
+      output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”' }`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"', "Content-Disposition": 'inline' }`,
+      output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”', "Content-Disposition": 'inline' }`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+  ].map(caseItem => ({ ...caseItem, options })),
+})
+
+jsxRuleTester.run("curly-quotes", rule, {
+  valid: [
+    {
+      code: "<style>{\".heading::after { content: ''; }\"}</style>",
+    },
+    {
+      code: "<script>var a = '';</script>",
+    },
+    {
+      code: "<div className=\"after:contents-[''] before:contents-['']\" />",
+    },
+    {
+      code: "<div className={clsx(\"after:contents-['']\", \"before:contents-['']\")} />",
+    },
+  ].map(caseItem => ({ ...caseItem, options })),
+  invalid: [
+    {
+      code: '<Component>I\'m a "web developer"</Component>',
+      output: "<Component>I’m a “web developer”</Component>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "JSXText" }],
+    },
+    {
+      code: '<Component>"Hello, world!"</Component>',
+      output: "<Component>“Hello, world!”</Component>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "JSXText" }],
+    },
+    {
+      code: "<Component name=\"I'm a 'web developer'\"></Component>",
+      output: '<Component name="I’m a ‘web developer’"></Component>',
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+  ].map(caseItem => ({ ...caseItem, options })),
+})
+
+vueRuleTester.run("curly-quotes", rule, {
+  // Note: `eslint-plugin-vue` doesn't support fixing style tags (https://github.com/vuejs/eslint-plugin-vue/issues/1997).
+  valid: [
+    {
+      code: `<template>{{ 'No quotes' }}</template>`,
+    },
+    {
+      code: "<template>{{ /''/g }}</template>",
+    },
+    {
+      code: "<script>let a = { name: 'Hello' };</script>",
+    },
+    {
+      code: `<template><div data-text="Hello World"></div></template>`,
+    },
+    {
+      code: `<template><div :data-text="'Hello World'"></div></template>`,
+    },
+  ].map(caseItem => ({ ...caseItem, options, filename: "test.vue" })),
+  invalid: [
+    {
+      code: "<template>I don't know how to properly write ' quotes ' , sorry!</template>",
+      output:
+        "<template>I don’t know how to properly write ‘ quotes ’ , sorry!</template>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "VText" }],
+    },
+    {
+      code: "<template>{{ 'I\\'m enthusiastic about writing tests!' }}</template>",
+      output:
+        "<template>{{ 'I’m enthusiastic about writing tests!' }}</template>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: "<template>{{ `${'I\\'m enthusiastic about writing tests!'}` }}</template>",
+      output:
+        "<template>{{ `${'I’m enthusiastic about writing tests!'}` }}</template>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: "<script>let a = { name: 'I\\'m a \"web developer\"' };</script>",
+      output: "<script>let a = { name: 'I’m a “web developer”' };</script>",
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: `<template><div data-text="I'm a web dev"></div></template>`,
+      output: `<template><div data-text="I’m a web dev"></div></template>`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "VLiteral" }],
+    },
+    {
+      code: `<template><div :data-text="'I\\'m a web dev'"></div></template>`,
+      output: `<template><div :data-text="'I’m a web dev'"></div></template>`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: `<template><div>Hello <img />' World</div></template>`,
+      output: `<template><div>Hello <img />‘ World</div></template>`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "VText" }],
+    },
+  ].map(caseItem => ({ ...caseItem, options, filename: "test.vue" })),
 })
