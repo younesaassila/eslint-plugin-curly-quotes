@@ -97,14 +97,15 @@ export default [
           "single-closing": "’", // This character is also used to replace apostrophes.
           "double-opening": "“",
           "double-closing": "”",
-          "ignored-jsx-elements": ["script", "style"], // Straight quotes in these JSX elements are ignored.
-          "ignored-jsx-attributes": ["className", "id", "key", "style"], // Straight quotes in these JSX attributes are ignored.
+          "ignored-elements": ["script", "style"], // Straight quotes in these JSX elements are ignored.
+          "ignored-attributes": ["className", "id", "key", "style"], // Straight quotes in these JSX attributes are ignored.
           "ignored-function-calls": [
             "document.querySelector",
             "document.querySelectorAll",
             "Error",
             "RegExp", // This also ignores regular expression literals.
           ], // Straight quotes passed as parameters to these functions are ignored.
+          "ignored-object-properties": [], // Straight quotes in these object properties' values are ignored.
         },
       ],
     },

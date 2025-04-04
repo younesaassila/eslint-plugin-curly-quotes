@@ -32,14 +32,15 @@ const options: [RuleOptions] = [
     "single-closing": "’",
     "double-opening": "“",
     "double-closing": "”",
-    "ignored-jsx-elements": ["script", "style"],
-    "ignored-jsx-attributes": ["className", "id", "key", "style"],
+    "ignored-elements": ["script", "style"],
+    "ignored-attributes": ["className", "id", "key", "style"],
     "ignored-function-calls": [
       "document.querySelector",
       "document.querySelectorAll",
       "Error",
       "RegExp",
     ],
+    "ignored-object-properties": ["Content-Disposition"],
   },
 ]
 
@@ -74,6 +75,15 @@ scriptRuleTester.run("curly-quotes", rule, {
     },
     {
       code: "/''/g",
+    },
+    {
+      code: `var obj = { "Content-Disposition": 'Hello' }`,
+    },
+    {
+      code: `var obj = { "Content-Disposition": 'attachment; filename="hello.txt"' }`,
+    },
+    {
+      code: `var obj = { "Content-Disposition": { whatever: 'attachment; filename="hello.txt"' } }`,
     },
   ].map(caseItem => ({ ...caseItem, options })),
   invalid: [
@@ -140,7 +150,6 @@ scriptRuleTester.run("curly-quotes", rule, {
       output: "var str = `The correct answer is “${'banana'}”.`",
       errors: [{ messageId: "preferCurlyQuotes", type: "TemplateLiteral" }],
     },
-
     /**
      * Unnecessary backslashes
      */
@@ -157,6 +166,24 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: String.raw`"Let\\\'s go!"`,
       output: String.raw`"Let\\’s go!"`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    /**
+     * Object Properties
+     */
+    {
+      code: String.raw`var obj = { name: 'I\'m a "web developer"' }`,
+      output: String.raw`var obj = { name: 'I’m a “web developer”' }`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"' }`,
+      output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”' }`,
+      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+    },
+    {
+      code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"', "Content-Disposition": 'inline' }`,
+      output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”', "Content-Disposition": 'inline' }`,
       errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
     },
   ].map(caseItem => ({ ...caseItem, options })),

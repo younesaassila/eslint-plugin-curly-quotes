@@ -1,13 +1,18 @@
 import type { AST } from "vue-eslint-parser"
 import type {
-  JSXText,
   Node as BaseNode,
+  JSXText,
   JSXAttribute,
   JSXOpeningElement,
+} from "@babel/types"
+import type {
+  Node,
+  Literal,
+  TemplateLiteral,
   CallExpression,
   NewExpression,
-} from "@babel/types"
-import type { Literal, Node, TemplateLiteral } from "estree"
+  Property,
+} from "estree"
 import type { Rule } from "eslint"
 import type { RuleOptions } from "../types"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
@@ -18,16 +23,17 @@ const defaultOptions: RuleOptions = {
   "single-closing": "’",
   "double-opening": "“",
   "double-closing": "”",
-  "ignored-jsx-elements": ["script", "style"],
-  "ignored-jsx-attributes": ["className", "id", "key", "style"],
+  "ignored-elements": ["script", "style"],
+  "ignored-jsx-elements": [],
+  "ignored-attributes": ["className", "id", "key", "style"],
+  "ignored-jsx-attributes": [],
   "ignored-function-calls": [
     "document.querySelector",
     "document.querySelectorAll",
     "Error",
     "RegExp",
   ],
-  // TODO: `ignored-object-properties` option
-  // TODO: Rename `ignored-jsx-elements` & `ignored-jsx-attributes` options to `ignored-elements` & `ignored-attributes`
+  "ignored-object-properties": [],
 }
 
 const rule: Rule.RuleModule = {
@@ -60,20 +66,37 @@ const rule: Rule.RuleModule = {
             type: "string",
             description: "Double closing typographic quotation mark",
           },
+          "ignored-elements": {
+            type: "array",
+            items: { type: "string" },
+            description: "JSX/Vue elements to ignore",
+          },
           "ignored-jsx-elements": {
             type: "array",
             items: { type: "string" },
             description: "JSX elements to ignore",
+            deprecated: true,
+          },
+          "ignored-attributes": {
+            type: "array",
+            items: { type: "string" },
+            description: "JSX/Vue attributes to ignore",
           },
           "ignored-jsx-attributes": {
             type: "array",
             items: { type: "string" },
             description: "JSX attributes to ignore",
+            deprecated: true,
           },
           "ignored-function-calls": {
             type: "array",
             items: { type: "string" },
             description: "Function calls to ignore",
+          },
+          "ignored-object-properties": {
+            type: "array",
+            items: { type: "string" },
+            description: "Object properties to ignore",
           },
         },
         additionalProperties: false,
@@ -85,14 +108,29 @@ const rule: Rule.RuleModule = {
       ...defaultOptions,
       ...(context.options[0] ?? {}),
     }
+    // TODO: Remove this in the next major version.
+    if (
+      options["ignored-jsx-elements"] !== undefined &&
+      options["ignored-jsx-elements"].length > 0
+    ) {
+      options["ignored-elements"] = options["ignored-jsx-elements"]
+    }
+    if (
+      options["ignored-jsx-attributes"] !== undefined &&
+      options["ignored-jsx-attributes"].length > 0
+    ) {
+      options["ignored-attributes"] = options["ignored-jsx-attributes"]
+    }
 
-    const elementsToIgnore = options["ignored-jsx-elements"]
-    const attributesToIgnore = options["ignored-jsx-attributes"]
+    const elementsToIgnore = options["ignored-elements"]
+    const attributesToIgnore = options["ignored-attributes"]
     const functionCallsToIgnore = options["ignored-function-calls"]
+    const objectPropertiesToIgnore = options["ignored-object-properties"]
 
     let elementStack: string[] = []
     let attributeStack: string[] = []
     let callStack: string[] = []
+    let objectPropertyStack: string[] = []
 
     function handleNode(
       node: AST.Node | BaseNode | Node,
@@ -126,6 +164,17 @@ const rule: Rule.RuleModule = {
         callStack.length > 0 &&
         callStack.some(functionName =>
           functionCallsToIgnore.includes(functionName)
+        )
+      ) {
+        return
+      }
+
+      // Skip text replacement if the node is inside an object property that should be ignored.
+      if (
+        objectPropertiesToIgnore.length > 0 &&
+        objectPropertyStack.length > 0 &&
+        objectPropertyStack.some(propertyName =>
+          objectPropertiesToIgnore.includes(propertyName)
         )
       ) {
         return
@@ -304,6 +353,20 @@ const rule: Rule.RuleModule = {
       "NewExpression:exit": (node: NewExpression) => {
         if (node.callee.type === "Identifier") {
           callStack.pop()
+        }
+      },
+      Property: (node: Property) => {
+        if ("name" in node.key && node.key.name) {
+          objectPropertyStack.push(node.key.name)
+        } else if ("value" in node.key && node.key.value) {
+          objectPropertyStack.push(node.key.value.toString())
+        }
+      },
+      "Property:exit": (node: Property) => {
+        if ("name" in node.key && node.key.name) {
+          objectPropertyStack.pop()
+        } else if ("value" in node.key && node.key.value) {
+          objectPropertyStack.pop()
         }
       },
     }
