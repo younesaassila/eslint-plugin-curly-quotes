@@ -4,9 +4,9 @@ export type RuleOptions = {
   "double-opening": string
   "double-closing": string
   "ignored-elements": string[]
-  "ignored-jsx-elements"?: string[] | undefined // Deprecated
+  "ignored-jsx-elements"?: string[] // Deprecated
   "ignored-attributes": string[]
-  "ignored-jsx-attributes"?: string[] | undefined // Deprecated
+  "ignored-jsx-attributes"?: string[] // Deprecated
   "ignored-function-calls": string[]
   "ignored-object-properties": string[]
 }

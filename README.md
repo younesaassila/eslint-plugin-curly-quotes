@@ -105,7 +105,7 @@ export default [
             "Error",
             "RegExp", // This also ignores regular expression literals.
           ], // Straight quotes passed as parameters to these functions are ignored.
-          "ignored-object-properties": [], // Straight quotes in these object properties' values are ignored.
+          "ignored-object-properties": [], // Straight quotes in these object properties are ignored.
         },
       ],
     },

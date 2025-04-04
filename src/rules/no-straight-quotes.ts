@@ -4,7 +4,7 @@ import type {
   JSXText,
   JSXAttribute,
   JSXOpeningElement,
-} from "@babel/types"
+} from "@babel/types" // Only used for JSX types.
 import type {
   Node,
   Literal,
@@ -24,9 +24,7 @@ const defaultOptions: RuleOptions = {
   "double-opening": "“",
   "double-closing": "”",
   "ignored-elements": ["script", "style"],
-  "ignored-jsx-elements": [],
   "ignored-attributes": ["className", "id", "key", "style"],
-  "ignored-jsx-attributes": [],
   "ignored-function-calls": [
     "document.querySelector",
     "document.querySelectorAll",
