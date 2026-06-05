@@ -40,6 +40,11 @@ const options: [RuleOptions] = [
       "Error",
       "RegExp",
       "*.testWildcard",
+      {
+        text: "CaseInsensitiveNoCascading",
+        caseInsensitive: true,
+        cascades: false,
+      },
     ],
     "ignored-object-properties": ["Content-Disposition"],
   },
@@ -64,6 +69,9 @@ scriptRuleTester.run("curly-quotes", rule, {
     },
     {
       code: "String.raw`Hello, 'world'`",
+    },
+    {
+      code: `document.querySelector(anything(" ' "))`,
     },
     {
       code: 'throw new Error("Shouldn\'t have quotes " + upperCase("replaced \\"\\":)"));',
@@ -91,6 +99,9 @@ scriptRuleTester.run("curly-quotes", rule, {
     },
     {
       code: `anything.anything.testWildcard(" ' ")`,
+    },
+    {
+      code: `caseinsensitivenocascading(" ' ")`,
     },
   ].map(caseItem => ({ ...caseItem, options })),
   invalid: [
@@ -201,6 +212,11 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: `anything\ntestWildcard(" ' ")`,
       output: `anything\ntestWildcard(" ‘ ")`,
+      errors: [{ messageId: "preferCurlyQuotes" }],
+    },
+    {
+      code: `caseinsensitivenocascading(anything(" ' "))`,
+      output: `caseinsensitivenocascading(anything(" ‘ "))`,
       errors: [{ messageId: "preferCurlyQuotes" }],
     },
   ].map(caseItem => ({ ...caseItem, options })),

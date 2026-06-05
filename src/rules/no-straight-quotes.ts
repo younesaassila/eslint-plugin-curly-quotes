@@ -67,7 +67,21 @@ const rule: Rule.RuleModule = {
           },
           "ignored-elements": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "JSX/Vue elements to ignore",
           },
           "ignored-jsx-elements": {
@@ -78,7 +92,21 @@ const rule: Rule.RuleModule = {
           },
           "ignored-attributes": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "JSX/Vue attributes to ignore",
           },
           "ignored-jsx-attributes": {
@@ -89,12 +117,40 @@ const rule: Rule.RuleModule = {
           },
           "ignored-function-calls": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "Function calls to ignore",
           },
           "ignored-object-properties": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "Object properties to ignore",
           },
         },
@@ -143,9 +199,7 @@ const rule: Rule.RuleModule = {
       if (
         elementsToIgnore.length > 0 &&
         elementStack.length > 0 &&
-        elementStack.some(elementName =>
-          ignoreOptionIncludes(elementsToIgnore, elementName)
-        )
+        ignoreOptionIncludes(elementsToIgnore, elementStack)
       ) {
         return
       }
@@ -154,9 +208,7 @@ const rule: Rule.RuleModule = {
       if (
         attributesToIgnore.length > 0 &&
         attributeStack.length > 0 &&
-        attributeStack.some(attributeName =>
-          ignoreOptionIncludes(attributesToIgnore, attributeName)
-        )
+        ignoreOptionIncludes(attributesToIgnore, attributeStack)
       ) {
         return
       }
@@ -165,9 +217,7 @@ const rule: Rule.RuleModule = {
       if (
         functionCallsToIgnore.length > 0 &&
         callStack.length > 0 &&
-        callStack.some(functionName =>
-          ignoreOptionIncludes(functionCallsToIgnore, functionName)
-        )
+        ignoreOptionIncludes(functionCallsToIgnore, callStack)
       ) {
         return
       }
@@ -176,9 +226,7 @@ const rule: Rule.RuleModule = {
       if (
         objectPropertiesToIgnore.length > 0 &&
         objectPropertyStack.length > 0 &&
-        objectPropertyStack.some(propertyName =>
-          ignoreOptionIncludes(objectPropertiesToIgnore, propertyName)
-        )
+        ignoreOptionIncludes(objectPropertiesToIgnore, objectPropertyStack)
       ) {
         return
       }
