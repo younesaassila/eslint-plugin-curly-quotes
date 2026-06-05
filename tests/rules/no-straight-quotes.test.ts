@@ -39,6 +39,7 @@ const options: [RuleOptions] = [
       "document.querySelectorAll",
       "Error",
       "RegExp",
+      "*.testWildcard",
     ],
     "ignored-object-properties": ["Content-Disposition"],
   },
@@ -84,6 +85,12 @@ scriptRuleTester.run("curly-quotes", rule, {
     },
     {
       code: `var obj = { "Content-Disposition": { whatever: 'attachment; filename="hello.txt"' } }`,
+    },
+    {
+      code: `anything.testWildcard(" ' ")`,
+    },
+    {
+      code: `anything.anything.testWildcard(" ' ")`,
     },
   ].map(caseItem => ({ ...caseItem, options })),
   invalid: [
@@ -184,6 +191,16 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"', "Content-Disposition": 'inline' }`,
       output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”', "Content-Disposition": 'inline' }`,
+      errors: [{ messageId: "preferCurlyQuotes" }],
+    },
+    {
+      code: `testWildcard(" ' ")`,
+      output: `testWildcard(" ‘ ")`,
+      errors: [{ messageId: "preferCurlyQuotes" }],
+    },
+    {
+      code: `anything\ntestWildcard(" ' ")`,
+      output: `anything\ntestWildcard(" ‘ ")`,
       errors: [{ messageId: "preferCurlyQuotes" }],
     },
   ].map(caseItem => ({ ...caseItem, options })),
