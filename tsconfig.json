@@ -1,12 +1,14 @@
 {
+  "include": ["src/**/*", "tests/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
     "noEmit": true,
-    "resolveJsonModule": true,
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true
   }
 }
