@@ -5,18 +5,25 @@ on:
     branches: ["**"]
     tags-ignore: ["**"]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: ["**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    concurrency: build-${{ github.ref }}
-
+    if: ${{ !github.event.pull_request.draft }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Run linter
         run: npm run lint
       - name: Run type checker

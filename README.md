@@ -97,15 +97,55 @@ export default [
           "single-closing": "’", // This character is also used to replace apostrophes.
           "double-opening": "“",
           "double-closing": "”",
-          "ignored-elements": ["script", "style"], // Straight quotes in these JSX elements are ignored.
-          "ignored-attributes": ["className", "id", "key", "style"], // Straight quotes in these JSX attributes are ignored.
+        },
+      ],
+    },
+  },
+]
+```
+
+You may also ignore straight quotes in specific JSX/Vue elements, JSX/Vue attributes, function calls, and object properties:
+
+```js
+import curlyQuotes from "eslint-plugin-curly-quotes"
+
+export default [
+  {
+    plugins: {
+      "curly-quotes": curlyQuotes,
+    },
+    rules: {
+      "curly-quotes/no-straight-quotes": [
+        "warn",
+        {
+          "single-opening": "‘",
+          "single-closing": "’", // This character is also used to replace apostrophes.
+          "double-opening": "“",
+          "double-closing": "”",
+          "ignored-elements": ["script", "style"],
+          "ignored-attributes": ["className", "id", "key", "style"],
           "ignored-function-calls": [
             "document.querySelector",
             "document.querySelectorAll",
             "Error",
             "RegExp", // This also ignores regular expression literals.
-          ], // Straight quotes passed as parameters to these functions are ignored.
-          "ignored-object-properties": [], // Straight quotes in these object properties are ignored.
+            "*.exampleFunction", // Wildcards are supported.
+            {
+              text: "exampleFunction",
+
+              // Whether the function name should be matched case-insensitively.
+              // Default is `false`.
+              caseInsensitive: true,
+
+              // Whether nested function calls should be ignored. For example,
+              // if `exampleFunction` is ignored and `cascades` is set to `true`,
+              // then `exampleFunction(anotherFunction("'"))` will also be ignored.
+              // If `cascades` is set to `false`, then only `exampleFunction("'")` will be ignored.
+              // Default is `true`.
+              cascades: false,
+            },
+          ],
+          "ignored-object-properties": [],
         },
       ],
     },
