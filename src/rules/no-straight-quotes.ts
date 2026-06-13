@@ -15,6 +15,7 @@ import type {
 } from "estree"
 import type { Rule } from "eslint"
 import type { RuleOptions } from "../types"
+import { ignoreOptionIncludes, parseIgnoreOption } from "../lib/ignoreOptions"
 import getIgnoredIndexRanges from "../lib/getIgnoredIndexRanges"
 import replaceQuotes from "../lib/replaceQuotes"
 
@@ -66,7 +67,21 @@ const rule: Rule.RuleModule = {
           },
           "ignored-elements": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "JSX/Vue elements to ignore",
           },
           "ignored-jsx-elements": {
@@ -77,7 +92,21 @@ const rule: Rule.RuleModule = {
           },
           "ignored-attributes": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "JSX/Vue attributes to ignore",
           },
           "ignored-jsx-attributes": {
@@ -88,12 +117,40 @@ const rule: Rule.RuleModule = {
           },
           "ignored-function-calls": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "Function calls to ignore",
           },
           "ignored-object-properties": {
             type: "array",
-            items: { type: "string" },
+            items: {
+              anyOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    caseInsensitive: { type: "boolean" },
+                    cascades: { type: "boolean" },
+                  },
+                  required: ["text"],
+                  additionalProperties: false,
+                },
+              ],
+            },
             description: "Object properties to ignore",
           },
         },
@@ -120,10 +177,14 @@ const rule: Rule.RuleModule = {
       options["ignored-attributes"] = options["ignored-jsx-attributes"]
     }
 
-    const elementsToIgnore = options["ignored-elements"]
-    const attributesToIgnore = options["ignored-attributes"]
-    const functionCallsToIgnore = options["ignored-function-calls"]
-    const objectPropertiesToIgnore = options["ignored-object-properties"]
+    const elementsToIgnore = parseIgnoreOption(options["ignored-elements"])
+    const attributesToIgnore = parseIgnoreOption(options["ignored-attributes"])
+    const functionCallsToIgnore = parseIgnoreOption(
+      options["ignored-function-calls"]
+    )
+    const objectPropertiesToIgnore = parseIgnoreOption(
+      options["ignored-object-properties"]
+    )
 
     let elementStack: string[] = []
     let attributeStack: string[] = []
@@ -138,9 +199,7 @@ const rule: Rule.RuleModule = {
       if (
         elementsToIgnore.length > 0 &&
         elementStack.length > 0 &&
-        elementStack.some(attributeName =>
-          elementsToIgnore.includes(attributeName)
-        )
+        ignoreOptionIncludes(elementsToIgnore, elementStack)
       ) {
         return
       }
@@ -149,9 +208,7 @@ const rule: Rule.RuleModule = {
       if (
         attributesToIgnore.length > 0 &&
         attributeStack.length > 0 &&
-        attributeStack.some(attributeName =>
-          attributesToIgnore.includes(attributeName)
-        )
+        ignoreOptionIncludes(attributesToIgnore, attributeStack)
       ) {
         return
       }
@@ -160,9 +217,7 @@ const rule: Rule.RuleModule = {
       if (
         functionCallsToIgnore.length > 0 &&
         callStack.length > 0 &&
-        callStack.some(functionName =>
-          functionCallsToIgnore.includes(functionName)
-        )
+        ignoreOptionIncludes(functionCallsToIgnore, callStack)
       ) {
         return
       }
@@ -171,9 +226,7 @@ const rule: Rule.RuleModule = {
       if (
         objectPropertiesToIgnore.length > 0 &&
         objectPropertyStack.length > 0 &&
-        objectPropertyStack.some(propertyName =>
-          objectPropertiesToIgnore.includes(propertyName)
-        )
+        ignoreOptionIncludes(objectPropertiesToIgnore, objectPropertyStack)
       ) {
         return
       }
@@ -300,7 +353,10 @@ const rule: Rule.RuleModule = {
 
     const scriptVisitor = {
       Literal: (node: Literal) => {
-        if ("regex" in node && functionCallsToIgnore.includes("RegExp")) {
+        if (
+          "regex" in node &&
+          ignoreOptionIncludes(functionCallsToIgnore, "RegExp")
+        ) {
           return
         }
         return handleNode(node, 1)

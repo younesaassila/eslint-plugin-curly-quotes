@@ -39,6 +39,12 @@ const options: [RuleOptions] = [
       "document.querySelectorAll",
       "Error",
       "RegExp",
+      "*.testWildcard",
+      {
+        text: "CaseInsensitiveNoCascading",
+        caseInsensitive: true,
+        cascades: false,
+      },
     ],
     "ignored-object-properties": ["Content-Disposition"],
   },
@@ -65,6 +71,9 @@ scriptRuleTester.run("curly-quotes", rule, {
       code: "String.raw`Hello, 'world'`",
     },
     {
+      code: `document.querySelector(anything(" ' "))`,
+    },
+    {
       code: 'throw new Error("Shouldn\'t have quotes " + upperCase("replaced \\"\\":)"));',
     },
     {
@@ -85,6 +94,15 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: `var obj = { "Content-Disposition": { whatever: 'attachment; filename="hello.txt"' } }`,
     },
+    {
+      code: `anything.testWildcard(" ' ")`,
+    },
+    {
+      code: `anything.anything.testWildcard(" ' ")`,
+    },
+    {
+      code: `caseinsensitivenocascading(" ' ")`,
+    },
   ].map(caseItem => ({ ...caseItem, options })),
   invalid: [
     /**
@@ -93,12 +111,12 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: '"I\'m enthusiastic about writing tests!"',
       output: '"I’m enthusiastic about writing tests!"',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: '"🎅🏻🎅🏽🎅🏿 I\'m Santa Claus! 🎅🏿🎅🏽🎅🏻"',
       output: '"🎅🏻🎅🏽🎅🏿 I’m Santa Claus! 🎅🏿🎅🏽🎅🏻"',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     /**
      * Single Quotes
@@ -107,27 +125,27 @@ scriptRuleTester.run("curly-quotes", rule, {
       code: "\"A Straight-Quote User Once Said: 'I use eslint-plugin-no-smart-quotes'\"",
       output:
         '"A Straight-Quote User Once Said: ‘I use eslint-plugin-no-smart-quotes’"',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "\"I don't know how to properly write ' quotes ' , sorry!\"",
       output: '"I don’t know how to properly write ‘ quotes ’ , sorry!"',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "\"Fish 'n' Chips\"",
       output: '"Fish ‘n’ Chips"', // Opening quote is expected in order to match Microsoft Word's behavior.
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "\"''\"",
       output: '"‘’"',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: '"\'"',
       output: '"’"',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     /**
      * Double Quotes
@@ -135,12 +153,12 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: "'Writing \" quotes \" is fun!'",
       output: "'Writing “ quotes ” is fun!'",
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "'\"\"'",
       output: "'“”'",
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     /**
      * Template Literals
@@ -148,7 +166,7 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: "var str = `The correct answer is \"${'banana'}\".`",
       output: "var str = `The correct answer is “${'banana'}”.`",
-      errors: [{ messageId: "preferCurlyQuotes", type: "TemplateLiteral" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     /**
      * Unnecessary backslashes
@@ -156,17 +174,17 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: String.raw`"Let\'s go!"`,
       output: String.raw`"Let’s go!"`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: String.raw`"Let\\'s go!"`,
       output: String.raw`"Let\\’s go!"`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: String.raw`"Let\\\'s go!"`,
       output: String.raw`"Let\\’s go!"`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     /**
      * Object Properties
@@ -174,17 +192,32 @@ scriptRuleTester.run("curly-quotes", rule, {
     {
       code: String.raw`var obj = { name: 'I\'m a "web developer"' }`,
       output: String.raw`var obj = { name: 'I’m a “web developer”' }`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"' }`,
       output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”' }`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: String.raw`var obj = { "Content-Type": 'attachment; filename="hello.txt"', "Content-Disposition": 'inline' }`,
       output: String.raw`var obj = { "Content-Type": 'attachment; filename=“hello.txt”', "Content-Disposition": 'inline' }`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
+    },
+    {
+      code: `testWildcard(" ' ")`,
+      output: `testWildcard(" ‘ ")`,
+      errors: [{ messageId: "preferCurlyQuotes" }],
+    },
+    {
+      code: `anything\ntestWildcard(" ' ")`,
+      output: `anything\ntestWildcard(" ‘ ")`,
+      errors: [{ messageId: "preferCurlyQuotes" }],
+    },
+    {
+      code: `caseinsensitivenocascading(anything(" ' "))`,
+      output: `caseinsensitivenocascading(anything(" ‘ "))`,
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
   ].map(caseItem => ({ ...caseItem, options })),
 })
@@ -208,17 +241,17 @@ jsxRuleTester.run("curly-quotes", rule, {
     {
       code: '<Component>I\'m a "web developer"</Component>',
       output: "<Component>I’m a “web developer”</Component>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "JSXText" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: '<Component>"Hello, world!"</Component>',
       output: "<Component>“Hello, world!”</Component>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "JSXText" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "<Component name=\"I'm a 'web developer'\"></Component>",
       output: '<Component name="I’m a ‘web developer’"></Component>',
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
   ].map(caseItem => ({ ...caseItem, options })),
 })
@@ -247,39 +280,39 @@ vueRuleTester.run("curly-quotes", rule, {
       code: "<template>I don't know how to properly write ' quotes ' , sorry!</template>",
       output:
         "<template>I don’t know how to properly write ‘ quotes ’ , sorry!</template>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "VText" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "<template>{{ 'I\\'m enthusiastic about writing tests!' }}</template>",
       output:
         "<template>{{ 'I’m enthusiastic about writing tests!' }}</template>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "<template>{{ `${'I\\'m enthusiastic about writing tests!'}` }}</template>",
       output:
         "<template>{{ `${'I’m enthusiastic about writing tests!'}` }}</template>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: "<script>let a = { name: 'I\\'m a \"web developer\"' };</script>",
       output: "<script>let a = { name: 'I’m a “web developer”' };</script>",
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: `<template><div data-text="I'm a web dev"></div></template>`,
       output: `<template><div data-text="I’m a web dev"></div></template>`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "VLiteral" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: `<template><div :data-text="'I\\'m a web dev'"></div></template>`,
       output: `<template><div :data-text="'I’m a web dev'"></div></template>`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "Literal" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
     {
       code: `<template><div>Hello <img />' World</div></template>`,
       output: `<template><div>Hello <img />‘ World</div></template>`,
-      errors: [{ messageId: "preferCurlyQuotes", type: "VText" }],
+      errors: [{ messageId: "preferCurlyQuotes" }],
     },
   ].map(caseItem => ({ ...caseItem, options, filename: "test.vue" })),
 })
